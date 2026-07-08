@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SECONDORDER – Decision Intelligence Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-fixed": "#e1e1ed",
+              "on-surface-variant": "#c7c6cc",
+              "on-primary-container": "#7d7e88",
+              "outline-variant": "#46464b",
+              "error": "#ffb4ab",
+              "surface-dim": "#111318",
+              "outline": "#919096",
+              "on-secondary-fixed-variant": "#005142",
+              "secondary": "#48ddbc",
+              "on-tertiary-fixed-variant": "#930014",
+              "secondary-fixed-dim": "#48ddbc",
+              "on-error-container": "#ffdad6",
+              "surface-container-lowest": "#0c0e12",
+              "inverse-primary": "#5c5e68",
+              "inverse-surface": "#e2e2e8",
+              "surface-bright": "#37393e",
+              "on-background": "#e2e2e8",
+              "on-error": "#690005",
+              "on-primary-fixed-variant": "#454650",
+              "primary": "#c5c6d1",
+              "primary-fixed-dim": "#c5c6d1",
+              "on-secondary-container": "#004437",
+              "on-primary-fixed": "#191b23",
+              "inverse-on-surface": "#2f3035",
+              "surface-container": "#1e2024",
+              "on-tertiary": "#68000b",
+              "tertiary-fixed-dim": "#ffb3ae",
+              "on-surface": "#e2e2e8",
+              "on-primary": "#2e3039",
+              "surface-container-highest": "#333539",
+              "on-secondary-fixed": "#002019",
+              "surface-variant": "#333539",
+              "primary-container": "#12141c",
+              "error-container": "#93000a",
+              "surface": "#111318",
+              "on-tertiary-container": "#e93d3f",
+              "background": "#111318",
+              "on-tertiary-fixed": "#410004",
+              "surface-container-high": "#282a2e",
+              "tertiary-fixed": "#ffdad7",
+              "tertiary": "#ffb3ae",
+              "surface-container-low": "#1a1c20",
+              "on-secondary": "#00382d",
+              "secondary-container": "#00bb9c",
+              "surface-tint": "#c5c6d1",
+              "tertiary-container": "#330003",
+              "secondary-fixed": "#6bfad8"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-panel {
+        background: rgba(55, 57, 62, 0.4);
+        backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface font-body min-h-screen flex overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex flex-col h-screen w-64 shrink-0 border-r border-white/5 bg-slate-950 font-['Inter'] text-sm font-medium sticky top-0">
+<div class="flex flex-col h-full py-6 px-4">
+<!-- Brand Section -->
+<div class="mb-10 px-4">
+<h1 class="font-['Space_Grotesk'] text-lg font-black text-white">SECONDORDER</h1>
+<p class="text-[10px] uppercase tracking-widest text-emerald-400 opacity-80">Decision Intelligence</p>
+</div>
+<!-- Main Nav -->
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 text-emerald-400 rounded-xl transition-all cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all rounded-xl cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+<span>Deployments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all rounded-xl cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span>Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all rounded-xl cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span>Settings</span>
+</a>
+</nav>
+<!-- Footer Nav -->
+<div class="mt-auto pt-6 border-t border-white/5 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all rounded-xl cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all rounded-xl cursor-pointer" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Documentation</span>
+</a>
+<div class="mt-6 flex items-center gap-3 px-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center overflow-hidden">
+<img alt="System Identity" data-alt="close up of a professional user avatar with a clean minimalist background and neutral lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwJqVuPpwaOOwYpJhwYqG9UBAkJ779qVsFS_8Ghz8QTIKDAvT45XlDRHyyu6CcnovbGYnIt-69D6ltG3SCJf6OipZeLwfkWIV3ThWuuH_M5MnvVzNmpMycAXpOr79eJA7lfby8RT41804yN5qek9KkPZ6cwYdAPPx7j1WpgY4wzKAFedCUzPvvFYX4aFGjbYmCw0xNYcVwb4j97uhA90GsiAZ0NKT_TpAgoBUgfUpF5_3NjF_lScP8i_v-4FHHCRBiOFfeEX_yNa8v"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-white">System Admin</span>
+<span class="text-[10px] text-slate-500">Instance: SO-PRD-01</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-y-auto h-screen">
+<!-- TopNavBar Component -->
+<header class="bg-slate-950/80 backdrop-blur-xl docked full-width top-0 z-50 sticky shadow-[0_8px_32px_0_rgba(10,12,16,0.06)]">
+<div class="flex justify-between items-center px-8 py-4 w-full max-w-[1920px] mx-auto">
+<div class="flex items-center gap-8">
+<div class="md:hidden font-['Space_Grotesk'] text-xl font-bold tracking-tighter text-slate-50">SECONDORDER</div>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-['Space_Grotesk'] tracking-tight text-emerald-400 border-b-2 border-emerald-400 pb-1" href="#">Dashboard</a>
+<a class="font-['Space_Grotesk'] tracking-tight text-slate-400 hover:text-slate-200 transition-colors" href="#">Deployments</a>
+<a class="font-['Space_Grotesk'] tracking-tight text-slate-400 hover:text-slate-200 transition-colors" href="#">Analysis</a>
+<a class="font-['Space_Grotesk'] tracking-tight text-slate-400 hover:text-slate-200 transition-colors" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 material-symbols-outlined scale-75" data-icon="search">search</span>
+<input class="bg-slate-900 border-none rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:ring-1 focus:ring-emerald-500 w-64" placeholder="Search signals..." type="text"/>
+</div>
+<button class="p-2 text-slate-400 hover:bg-white/5 rounded-lg transition-all duration-300 active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-white/5 rounded-lg transition-all duration-300 active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 ml-2">
+<img alt="User avatar" class="w-full h-full object-cover rounded-full" data-alt="abstract circular logo with glowing emerald green lines on a deep black background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDShQF0tSm_jsNW8kPo2GL85cMg6UGgQ8kTeiUicUdODIpgNN-atdAhanGMO_ClgMyIU1muR1DJvooa5NmOCd0YtS48Rij_VmgUKE0t21-LCqOLjDN97qh5sFVJbEbync0bHzMJTwcDKrxRsg1MqpH7psuhg9KJb9uB3YSRorezFQHTr88ZFiW4yR_yTycDWIYZj01_fTDvGFaxE_OQF8t9wT0SC5wxCkSEM5ONkWyBI2yxGbNBWGjc9W3TanepKl1rNbtMgKjj25nh"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<div class="p-8 space-y-8 w-full">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline text-4xl font-bold tracking-tight text-on-surface">SECONDORDER Dashboard</h2>
+<p class="font-body text-on-surface-variant text-lg">Real-Time Decision Intelligence System</p>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full">
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+</span>
+<span class="text-xs font-label uppercase tracking-widest text-on-primary-container">Live updating every 2 seconds</span>
+</div>
+</div>
+<!-- Risk Banner (Conditional Alert) -->
+<div class="bg-tertiary-container border-l-4 border-on-tertiary-container p-4 rounded-xl flex items-center justify-between shadow-lg">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="warning">warning</span>
+<span class="font-bold text-on-tertiary-container">⚠️ Risk detected in deployment: Version v2.4.1-rc3</span>
+</div>
+<button class="text-xs font-bold uppercase bg-on-tertiary-container text-tertiary-container px-4 py-2 rounded-lg hover:opacity-90 transition-all">Review Impact</button>
+</div>
+<!-- Bento Grid Main Content -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
+<!-- Decision Engine Panel -->
+<div class="md:col-span-8 bg-surface-container rounded-xl p-8 relative overflow-hidden group">
+<!-- Dynamic status glow background -->
+<div class="absolute inset-0 bg-gradient-to-br from-tertiary-container/20 to-transparent opacity-50"></div>
+<div class="relative z-10 flex flex-col h-full justify-between gap-12">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-on-primary-container font-label uppercase tracking-[0.2em] text-xs mb-1">Deployment Decision</h3>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="report" data-weight="fill">report</span>
+<span class="decision-text font-headline text-5xl font-black tracking-tighter">RISKY CHANGE</span>
+<div class="text-right">
+<span class="text-slate-500 text-xs font-label">CONFIDENCE</span>
+<div class="confidence text-2xl font-headline font-bold">0%</div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+<div class="bg-surface-container-high p-6 rounded-xl border border-white/5">
+<span class="text-xs text-on-primary-container font-label uppercase">Risk Vector</span>
+<div class="text-lg font-bold mt-1">Resource Exhaustion</div>
+<div class="mt-4 h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-on-tertiary-container w-[75%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 rounded-xl border border-white/5">
+<span class="text-xs text-on-primary-container font-label uppercase">Stability Impact</span>
+<div class="text-lg font-bold mt-1">Negative High</div>
+<div class="mt-4 h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-on-tertiary-container w-[92%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-high p-6 rounded-xl border border-white/5">
+<span class="text-xs text-on-primary-container font-label uppercase">Recovery Time</span>
+<div class="text-lg font-bold mt-1">4.2 Minutes</div>
+<div class="mt-4 h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[40%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Decision Score Card -->
+<div class="md:col-span-4 bg-surface-container-high rounded-xl p-8 flex flex-col justify-between border border-white/5">
+<div>
+<h3 class="text-on-primary-container font-label uppercase tracking-widest text-xs mb-8">Decision Score</h3>
+<div class="flex items-center justify-center h-40 w-40 mx-auto rounded-full border-4 border-on-tertiary-container/20 relative">
+<div class="text-center">
+<div class="text-6xl font-headline font-black text-on-tertiary-container">-1.4</div>
+<div class="text-[10px] text-on-surface-variant font-bold">CRITICAL THRESHOLD</div>
+</div>
+<!-- Circular Progress Visualization -->
+<svg class="absolute inset-0 -rotate-90" viewbox="0 0 100 100">
+<circle class="text-on-tertiary-container" cx="50" cy="50" fill="none" r="48" stroke="currentColor" stroke-dasharray="300" stroke-dashoffset="180" stroke-width="4"></circle>
+</svg>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between text-xs font-label">
+<span class="text-on-surface-variant">Policy Gradient</span>
+<span class="text-on-tertiary-container">-2.12 / sec</span>
+</div>
+<div class="h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-on-tertiary-container to-secondary w-1/3"></div>
+</div>
+<button class="w-full bg-surface-container-highest py-3 rounded-xl font-bold text-sm border border-white/5 hover:bg-white/5 transition-all active:scale-[0.98]">Manual Override</button>
+</div>
+</div>
+<!-- Metrics Section -->
+<div class="md:col-span-12">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline text-2xl font-bold">Metric Changes</h3>
+<div class="flex gap-2">
+<button class="px-4 py-1.5 bg-surface-container text-xs rounded-full border border-white/5 font-bold">Real-time</button>
+<button class="px-4 py-1.5 text-slate-500 text-xs rounded-full hover:bg-white/5 transition-all">Historical</button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Metric Card: Clicks -->
+<div class="bg-surface-container rounded-xl p-6 hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-label uppercase text-on-primary-container">Clicks</span>
+<span class="flex items-center text-secondary text-xs font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                    12.4%
+                                </span>
+</div>
+<div id="clicks" class="text-3xl font-headline font-bold mb-4">0</div>
+<div class="h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-secondary/20 h-[30%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[45%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[38%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[62%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/40 h-[75%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/40 h-[85%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary h-[100%] rounded-t-sm"></div>
+</div>
+</div>
+<!-- Metric Card: Conv Rate -->
+<div class="bg-surface-container rounded-xl p-6 hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-label uppercase text-on-primary-container">Conversion Rate</span>
+<span class="flex items-center text-secondary text-xs font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                    4.2%
+                                </span>
+</div>
+<div id="conversion" class="text-3xl font-headline font-bold mb-4">0</div>
+<div class="h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-secondary/20 h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[65%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[62%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[68%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/40 h-[72%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/40 h-[78%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary h-[85%] rounded-t-sm"></div>
+</div>
+</div>
+<!-- Metric Card: Latency -->
+<div class="bg-surface-container rounded-xl p-6 hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-label uppercase text-on-primary-container">Latency (P99)</span>
+<span class="flex items-center text-on-tertiary-container text-xs font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                    48ms
+                                </span>
+</div>
+<div id="latency" class="text-3xl font-headline font-bold mb-4">0</div>
+<div class="h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-on-tertiary-container/20 h-[20%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/20 h-[22%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/20 h-[25%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/20 h-[35%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/40 h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/60 h-[85%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container h-[100%] rounded-t-sm"></div>
+</div>
+</div>
+<!-- Metric Card: Error Rate -->
+<div class="bg-surface-container rounded-xl p-6 hover:translate-y-[-4px] transition-transform duration-300">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-label uppercase text-on-primary-container">Error Rate</span>
+<span class="flex items-center text-on-tertiary-container text-xs font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+                                    0.05%
+                                </span>
+</div>
+<div id="error" class="text-3xl font-headline font-bold mb-4">0</div>
+<div class="h-12 w-full flex items-end gap-1">
+<div class="flex-1 bg-on-tertiary-container/20 h-[10%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/20 h-[12%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/20 h-[10%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/20 h-[15%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/40 h-[25%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container/60 h-[45%] rounded-t-sm"></div>
+<div class="flex-1 bg-on-tertiary-container h-[70%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Insights Section -->
+<div class="md:col-span-12 lg:col-span-5 bg-surface-container rounded-xl p-8 border border-white/5">
+<h3 class="font-headline text-2xl font-bold mb-6">Detected Trade-offs</h3>
+<div id="tradeoffs" class="space-y-4">
+<div class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-high border-l-4 border-secondary">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+<div>
+<div class="font-bold text-sm">Conversion improved but latency increased</div>
+<p class="text-xs text-on-surface-variant mt-1">New JS payload in v2.4.1 adds 120ms to LCP while boosting checkouts by 4%.</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-high border-l-4 border-on-tertiary-container">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="warning">warning</span>
+<div>
+<div class="font-bold text-sm">Cache hit rate drop in US-EAST-1</div>
+<p class="text-xs text-on-surface-variant mt-1">Deployment invalidates legacy CDN paths causing 15% increase in origin fetch.</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-high border-l-4 border-on-primary-container">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="info">info</span>
+<div>
+<div class="font-bold text-sm">Mobile Engagement Spike</div>
+<p class="text-xs text-on-surface-variant mt-1">iOS users spending 22% more time in-app post-patch. Resource usage remains nominal.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Simulation/Preview Section -->
+<div class="md:col-span-12 lg:col-span-7 bg-surface-container rounded-xl p-8 border border-white/5 flex flex-col overflow-hidden relative">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline text-2xl font-bold">Decision Path Simulation</h3>
+<div class="text-[10px] font-bold text-secondary uppercase tracking-widest px-2 py-1 rounded bg-secondary/10">Simulating 1,000,000 Nodes</div>
+</div>
+<div class="flex-1 bg-surface-container-lowest rounded-xl min-h-[240px] flex items-center justify-center relative">
+<!-- Abstract "Neural" UI pattern representing the simulation -->
+<div class="absolute inset-0 opacity-20 pointer-events-none">
+<svg class="w-full h-full" viewbox="0 0 400 200">
+<circle cx="50" cy="100" fill="#48ddbc" r="4"></circle>
+<circle cx="150" cy="50" fill="#48ddbc" r="4"></circle>
+<circle cx="150" cy="150" fill="#ffb3ae" r="4"></circle>
+<circle cx="250" cy="100" fill="#48ddbc" r="4"></circle>
+<circle cx="350" cy="100" fill="#48ddbc" r="8"></circle>
+<path d="M54 100 L146 54" fill="none" stroke="#48ddbc" stroke-width="1"></path>
+<path d="M54 100 L146 146" fill="none" stroke="#ffb3ae" stroke-width="1"></path>
+<path d="M154 50 L246 96" fill="none" stroke="#48ddbc" stroke-width="1"></path>
+<path d="M154 150 L246 104" fill="none" stroke="#ffb3ae" stroke-width="1"></path>
+<path d="M254 100 L342 100" fill="none" stroke="#48ddbc" stroke-width="1"></path>
+</svg>
+</div>
+<div class="text-center z-10">
+<span class="material-symbols-outlined text-4xl text-on-primary-container animate-pulse" data-icon="psychology">psychology</span>
+<div class="text-xs font-label text-on-surface-variant mt-2">Computing probabilistic outcomes...</div>
+</div>
+</div>
+<div class="mt-6 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-on-primary-container">
+<span>Current Route: /api/v2/predict</span>
+<div class="flex gap-4">
+<span class="text-secondary">P(Success): 0.94</span>
+<span class="text-on-tertiary-container">P(Failure): 0.06</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar for Mobile Navigation Shell -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-xl border-t border-white/5 flex justify-around items-center h-16 px-4 z-[100]">
+<a class="flex flex-col items-center gap-1 text-emerald-400" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" data-weight="fill">dashboard</span>
+<span class="text-[10px] font-bold">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+<span class="text-[10px]">Deploy</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="text-[10px]">Stats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-[10px]">Settings</span>
+</a>
+</nav>
+<!-- Floating Action Button (FAB) - Only for Main Dashboard Context -->
+<button class="fixed bottom-24 right-8 w-14 h-14 bg-gradient-to-br from-secondary to-secondary-container text-on-secondary rounded-full flex items-center justify-center shadow-[0_10px_30px_-5px_rgba(72,221,188,0.5)] active:scale-90 transition-all z-[90]">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+<!-- Placeholder for periodic updates script -->
+<!-- 
+    <script>
+        async function refreshData() {
+            try {
+                const response = await fetch('/analyze');
+                const data = await response.json();
+                // Update UI elements here
+            } catch (e) {
+                console.log('Update connection paused');
+            }
+        }
+        setInterval(refreshData, 2000);
+    </script> 
+    -->
+<script>
+async function refreshData() {
+    try {
+        const res = await fetch('/analyze');
+        const data = await res.json();
+
+        if (data.error) return;
+
+        const decisionEl = document.querySelector(".decision-text");
+        decisionEl.innerText = data.prediction;
+
+        if (data.prediction === "SAFE TO DEPLOY") {
+            decisionEl.style.color = "#48ddbc";
+        } else {
+            decisionEl.style.color = "#ff4d4d";
+        }
+
+        document.querySelector(".confidence").innerText =
+            (data.confidence * 100).toFixed(1) + "%";
+
+        document.getElementById("clicks").innerText =
+            data.insights.clicks.change.toFixed(2);
+
+        document.getElementById("conversion").innerText =
+            (data.insights.conversion_rate.change * 100).toFixed(2) + "%";
+
+        document.getElementById("latency").innerText =
+            data.insights.latency.change.toFixed(2);
+
+        document.getElementById("error").innerText =
+            (data.insights.error_rate.change * 100).toFixed(2) + "%";
+
+        const tradeoffDiv = document.getElementById("tradeoffs");
+
+        if (tradeoffDiv) {
+            tradeoffDiv.innerHTML = "";
+
+            data.likely_changes.forEach(change => {
+                const card = document.createElement("div");
+
+                card.className =
+                    "flex items-start gap-4 p-4 rounded-lg bg-surface-container-high border-l-4 border-secondary";
+
+                card.innerHTML = `
+                    <div>
+                        <div class="font-bold text-sm">${change}</div>
+                        <p class="text-xs text-on-surface-variant mt-1">
+                            Derived from system behavior
+                        </p>
+                    </div>
+                `;
+
+                tradeoffDiv.appendChild(card);
+            });
+        }
+
+    } catch (err) {
+        console.log("Error:", err);
+    }
+}setInterval(refreshData, 2000);
+refreshData();
+
+</script>
+</body></html>

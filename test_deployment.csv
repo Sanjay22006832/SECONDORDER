@@ -1,0 +1,9 @@
+timestamp,metric_name,value,version
+2026-07-01 10:00:00,clicks,100,before
+2026-07-01 10:01:00,conversion_rate,0.10,before
+2026-07-01 10:02:00,latency,300,before
+2026-07-01 10:03:00,error_rate,0.05,before
+2026-07-08 10:00:00,clicks,125,after
+2026-07-08 10:01:00,conversion_rate,0.13,after
+2026-07-08 10:02:00,latency,240,after
+2026-07-08 10:03:00,error_rate,0.03,after

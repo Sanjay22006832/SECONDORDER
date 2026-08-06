@@ -1,7 +1,10 @@
 import json
 import os
-
+from dotenv import load_dotenv
 from openai import OpenAI
+
+load_dotenv()
+
 
 
 # =====================================================
@@ -82,6 +85,14 @@ Analyze the deployment and infer:
 3. Positive impacts
 4. Potential risks
 5. Engineering recommendation
+(
+• Return ONE concise paragraph.
+• Maximum 60 words.
+• Use 2–4 short sentences.
+• Explain the most important action the engineering team should take.
+• Avoid repeating the deployment summary.
+• Do not use bullet points.
+• Use simple, professional engineering language suitable for a deployment report.)
 6. Executive summary
 
 Guidelines

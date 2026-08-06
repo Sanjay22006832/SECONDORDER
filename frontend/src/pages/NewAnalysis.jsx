@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   Activity,
@@ -74,6 +74,12 @@ const liveMetrics = [
   },
 ];
 
+function getSourceFromPath(pathname) {
+  if (pathname.endsWith("/live-api")) return "api";
+  if (pathname.endsWith("/upload-dataset")) return "csv";
+  return "simulation";
+}
+
 function getSavedSettings() {
   try {
     const savedSettings = JSON.parse(
@@ -93,9 +99,10 @@ function getSavedSettings() {
 
 export default function NewAnalysis() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [source, setSource] =
-    useState("simulation");
+    useState(() => getSourceFromPath(location.pathname));
 
   const [analysisName, setAnalysisName] =
     useState("");
@@ -165,6 +172,10 @@ export default function NewAnalysis() {
     2000;
 
   useEffect(() => {
+    setSource(getSourceFromPath(location.pathname));
+  }, [location.pathname]);
+
+  useEffect(() => {
     function refreshSettings() {
       setSettings(
         getSavedSettings()
@@ -216,7 +227,7 @@ export default function NewAnalysis() {
         } catch (err) {
           setError(
             err.message ||
-              "Could not update the Live API session."
+            "Could not update the Live API session."
           );
         }
       },
@@ -272,7 +283,7 @@ export default function NewAnalysis() {
     } else if (
       cleanBefore &&
       cleanBefore.toLowerCase() ===
-        cleanAfter.toLowerCase()
+      cleanAfter.toLowerCase()
     ) {
       errors.afterVersion =
         "After version must differ from before version.";
@@ -431,7 +442,7 @@ export default function NewAnalysis() {
     } catch (err) {
       setError(
         err.message ||
-          "Could not start the Live API session."
+        "Could not start the Live API session."
       );
     } finally {
       setStartingLive(false);
@@ -457,7 +468,7 @@ export default function NewAnalysis() {
     } catch (err) {
       setError(
         err.message ||
-          "Could not stop the Live API session."
+        "Could not stop the Live API session."
       );
     } finally {
       setStoppingLive(false);
@@ -497,7 +508,7 @@ export default function NewAnalysis() {
 
       setError(
         err.message ||
-          "Could not complete the Live API analysis."
+        "Could not complete the Live API analysis."
       );
     } finally {
       setRunning(false);
@@ -567,11 +578,19 @@ export default function NewAnalysis() {
             analysisContext
           );
       } else {
+        console.log("BEFORE runSimulation");
         result =
           await runSimulation(
             analysisContext
           );
+        console.log("AFTER runSimulation");
+        console.log(result);
+        console.log("FULL RESULT:", result);
+        console.log("analysis_id =", result.analysis_id);
+        console.log("API BASE:", getCurrentApiBaseUrl());
+        console.log(JSON.stringify(result, null, 2));
       }
+
 
       saveCompletedResult(
         result,
@@ -580,7 +599,7 @@ export default function NewAnalysis() {
     } catch (err) {
       setError(
         err.message ||
-          "The analysis could not be completed."
+        "The analysis could not be completed."
       );
     } finally {
       setRunning(false);
@@ -642,9 +661,16 @@ export default function NewAnalysis() {
     if (
       currentSettings.autoOpenDecisionRoom
     ) {
-      navigate(
-        "/decision-room"
+      console.log("RESULT OBJECT:", result);
+      console.log("RESULT OBJECT:", JSON.stringify(result, null, 2));
+      console.log("analysis_id:", result?.analysis_id);
+
+      navigate(`/decision-room/${result?.analysis_id}`);
+      localStorage.setItem(
+        "last_analysis_id",
+        result.analysis_id
       );
+      navigate(`/decision-room/${result.analysis_id}`);
 
       return;
     }
@@ -699,7 +725,7 @@ export default function NewAnalysis() {
   const progressPercentage =
     Number(
       liveSession?.progress_percentage ||
-        0
+      0
     );
 
   const signalsReceived =
@@ -731,14 +757,12 @@ export default function NewAnalysis() {
           </span>
 
           <h2>
-            Evaluate a system change.
+            {source === "api" ? "Connect live deployment intelligence." : source === "csv" ? "Investigate a deployment dataset." : "Run a deployment simulation."}
           </h2>
 
           <p>
-            Tell SECONDORDER where the
-            signals come from and what
-            changed between the two
-            versions.
+            Configure this investigation, then let SECONDORDER generate an
+            AI decision report for your engineering team.
           </p>
         </section>
 
@@ -750,62 +774,13 @@ export default function NewAnalysis() {
               </div>
 
               <div className="form-section-content">
-                <h3>
-                  Select data source
-                </h3>
+                <h3>{selectedSource?.title}</h3>
 
                 <p>
-                  Choose how SECONDORDER
-                  should receive the
-                  before-and-after signals.
+                  {selectedSource?.description}
                 </p>
 
-                <div className="source-grid">
-                  {sources.map((item) => {
-                    const Icon =
-                      item.icon;
-
-                    const selected =
-                      source === item.id;
-
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`source-card ${
-                          selected
-                            ? "selected"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          handleSourceChange(
-                            item.id
-                          )
-                        }
-                      >
-                        <div className="source-icon">
-                          <Icon size={20} />
-                        </div>
-
-                        <div>
-                          <strong>
-                            {item.title}
-                          </strong>
-
-                          <p>
-                            {item.description}
-                          </p>
-                        </div>
-
-                        {selected && (
-                          <span className="source-check">
-                            <Check size={13} />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <button type="button" className="change-investigation-type" onClick={() => navigate("/new-analysis")}>Change investigation type</button>
 
                 {source === "api" && (
                   <div className="live-api-section">
@@ -822,11 +797,10 @@ export default function NewAnalysis() {
                       </div>
 
                       <div
-                        className={`live-api-status ${
-                          liveSessionActive
-                            ? "active"
-                            : ""
-                        }`}
+                        className={`live-api-status ${liveSessionActive
+                          ? "active"
+                          : ""
+                          }`}
                       >
                         <span />
 
@@ -858,6 +832,11 @@ export default function NewAnalysis() {
                           ? "Copied"
                           : "Copy"}
                       </button>
+                    </div>
+
+                    <div className="live-api-credential">
+                      <span>API KEY</span>
+                      <strong>No API key is required by the current ingestion endpoint.</strong>
                     </div>
 
                     {!liveSessionActive ? (
@@ -949,7 +928,7 @@ export default function NewAnalysis() {
                               const status =
                                 liveSession
                                   ?.metrics?.[
-                                  metric.key
+                                metric.key
                                 ] || {};
 
                               return (
@@ -1159,26 +1138,23 @@ export default function NewAnalysis() {
 
               <div className="form-section-content">
                 <h3>
-                  Define the change
+                  Deployment Context
                 </h3>
 
                 <p>
-                  Add context so the
-                  analysis remains
-                  meaningful in Decision
-                  History.
+                  Give the AI enough context to interpret the deployment and
+                  preserve a useful decision record.
                 </p>
 
                 <div className="field-grid">
                   <label
-                    className={`field full-field ${
-                      fieldErrors.analysisName
-                        ? "field-invalid"
-                        : ""
-                    }`}
+                    className={`field full-field ${fieldErrors.analysisName
+                      ? "field-invalid"
+                      : ""
+                      }`}
                   >
                     <span>
-                      Analysis name
+                      Deployment name
                     </span>
 
                     <input
@@ -1191,7 +1167,7 @@ export default function NewAnalysis() {
                           setAnalysisName
                         )
                       }
-                      placeholder="e.g. Checkout API optimization"
+                      placeholder="e.g. Checkout API Optimization"
                       aria-invalid={Boolean(
                         fieldErrors.analysisName
                       )}
@@ -1207,11 +1183,10 @@ export default function NewAnalysis() {
                   </label>
 
                   <label
-                    className={`field ${
-                      fieldErrors.beforeVersion
-                        ? "field-invalid"
-                        : ""
-                    }`}
+                    className={`field ${fieldErrors.beforeVersion
+                      ? "field-invalid"
+                      : ""
+                      }`}
                   >
                     <span>
                       Before version
@@ -1227,7 +1202,7 @@ export default function NewAnalysis() {
                           setBeforeVersion
                         )
                       }
-                      placeholder="v2.4.1"
+                      placeholder="e.g. v2.4.1"
                       aria-invalid={Boolean(
                         fieldErrors.beforeVersion
                       )}
@@ -1243,11 +1218,10 @@ export default function NewAnalysis() {
                   </label>
 
                   <label
-                    className={`field ${
-                      fieldErrors.afterVersion
-                        ? "field-invalid"
-                        : ""
-                    }`}
+                    className={`field ${fieldErrors.afterVersion
+                      ? "field-invalid"
+                      : ""
+                      }`}
                   >
                     <span>
                       After version
@@ -1263,7 +1237,7 @@ export default function NewAnalysis() {
                           setAfterVersion
                         )
                       }
-                      placeholder="v2.5.0"
+                      placeholder="e.g. v2.5.0"
                       aria-invalid={Boolean(
                         fieldErrors.afterVersion
                       )}
@@ -1279,14 +1253,13 @@ export default function NewAnalysis() {
                   </label>
 
                   <label
-                    className={`field full-field ${
-                      fieldErrors.changeDescription
-                        ? "field-invalid"
-                        : ""
-                    }`}
+                    className={`field full-field ${fieldErrors.changeDescription
+                      ? "field-invalid"
+                      : ""
+                      }`}
                   >
                     <span>
-                      What changed?
+                      Deployment summary
                     </span>
 
                     <textarea
@@ -1301,7 +1274,7 @@ export default function NewAnalysis() {
                           setChangeDescription
                         )
                       }
-                      placeholder="Describe the system change..."
+                      placeholder="e.g. Added Redis cache, optimized SQL queries, and updated API gateway routing."
                       aria-invalid={Boolean(
                         fieldErrors.changeDescription
                       )}
@@ -1319,12 +1292,11 @@ export default function NewAnalysis() {
                       )}
 
                       <small
-                        className={`field-character-count ${
-                          changeDescription.trim()
-                            .length >= 15
-                            ? "complete"
-                            : ""
-                        }`}
+                        className={`field-character-count ${changeDescription.trim()
+                          .length >= 15
+                          ? "complete"
+                          : ""
+                          }`}
                       >
                         {
                           changeDescription.trim()
@@ -1342,12 +1314,12 @@ export default function NewAnalysis() {
           <aside className="analysis-summary-card">
             <div>
               <span className="eyebrow">
-                ANALYSIS PLAN
+                03 · ANALYSIS PLAN
               </span>
 
               <h3>
                 {analysisName.trim() ||
-                  "Ready to evaluate"}
+                  "Ready to investigate"}
               </h3>
             </div>
 
@@ -1427,11 +1399,11 @@ export default function NewAnalysis() {
 
             <div className="plan-item">
               <span>
-                Signals
+                Signals analyzed
               </span>
 
               <strong>
-                4 metrics
+                4 deployment signals
               </strong>
             </div>
 
@@ -1444,12 +1416,39 @@ export default function NewAnalysis() {
 
             <div className="plan-item">
               <span>
-                ML outcome
+                Model
               </span>
 
               <strong>
-                4 classes
+                Random Forest
               </strong>
+            </div>
+
+            <div className="plan-item">
+              <span>
+                Estimated runtime
+              </span>
+
+              <strong>
+                {source === "api"
+                  ? "Live collection"
+                  : "Under 30 seconds"}
+              </strong>
+            </div>
+
+            <div className="generated-report-plan">
+              <span>
+                GENERATED REPORT
+              </span>
+
+              <ul>
+                <li><Check size={13} /> Executive Summary</li>
+                <li><Check size={13} /> Deployment Decision</li>
+                <li><Check size={13} /> Signal Evidence</li>
+                <li><Check size={13} /> AI Investigation</li>
+                <li><Check size={13} /> Engineering Assessment</li>
+                <li><Check size={13} /> Recommendation</li>
+              </ul>
             </div>
 
             {error && (
@@ -1465,62 +1464,68 @@ export default function NewAnalysis() {
               </div>
             )}
 
-            <button
-              type="button"
-              className="run-analysis-button"
-              onClick={
-                successMessage
-                  ? () =>
+            <div className="launch-investigation">
+              <span className="eyebrow">
+                04 · LAUNCH INVESTIGATION
+              </span>
+
+              <button
+                type="button"
+                className="run-analysis-button"
+                onClick={
+                  successMessage
+                    ? () =>
                       navigate(
-                        "/decision-room"
+                        `/decision-room/${localStorage.getItem("last_analysis_id")}`
                       )
-                  : handleRunAnalysis
-              }
-              disabled={
-                running ||
-                startingLive ||
-                (
-                  source === "api" &&
-                  liveSessionActive
-                )
-              }
-            >
-              {successMessage
-                ? "Open Decision Room"
-                : running
-                ? source === "csv"
-                  ? "Uploading & Analyzing..."
-                  : source === "api"
-                  ? "Completing Live Analysis..."
-                  : "Running ML Analysis..."
-                : source === "api"
-                ? liveSessionActive
-                  ? "Listening for Signals..."
-                  : "Start Live Session"
-                : "Run SECONDORDER Analysis"}
+                    : handleRunAnalysis
+                }
+                disabled={
+                  running ||
+                  startingLive ||
+                  (
+                    source === "api" &&
+                    liveSessionActive
+                  )
+                }
+              >
+                {successMessage
+                  ? "Open Decision Room"
+                  : running
+                    ? source === "csv"
+                      ? "Uploading & Analyzing..."
+                      : source === "api"
+                        ? "Completing Live Analysis..."
+                        : "Running ML Analysis..."
+                    : source === "api"
+                      ? liveSessionActive
+                        ? "Listening for Signals..."
+                        : "Analyze Deployment"
+                      : "Analyze Deployment"}
 
-              {!running &&
-                !(
-                  source === "api" &&
-                  liveSessionActive
-                ) && (
-                  <ArrowRight
-                    size={17}
-                  />
-                )}
-            </button>
+                {!running &&
+                  !(
+                    source === "api" &&
+                    liveSessionActive
+                  ) && (
+                    <ArrowRight
+                      size={17}
+                    />
+                  )}
+              </button>
 
-            <p className="run-note">
-              {source === "api"
-                ? liveSessionActive
-                  ? settings.autoOpenDecisionRoom
-                    ? "The Decision Room will open automatically when all required signals are received."
-                    : "The completed result will remain here until you choose to open the Decision Room."
-                  : `Start a session to begin receiving metrics through the ingestion API. Polling interval: ${pollingSeconds}s.`
-                : settings.autoSaveHistory
-                ? "The completed analysis will automatically be saved to Decision History."
-                : "The completed analysis will not be added to Decision History automatically."}
-            </p>
+              <p className="run-note">
+                {source === "api"
+                  ? liveSessionActive
+                    ? settings.autoOpenDecisionRoom
+                      ? "The Decision Room will open automatically when all required signals are received."
+                      : "The completed result will remain here until you choose to open the Decision Room."
+                    : `Start a session to begin receiving metrics through the ingestion API. Polling interval: ${pollingSeconds}s.`
+                  : settings.autoSaveHistory
+                    ? "Estimated runtime: under 30 seconds. Results are automatically saved to Decision History."
+                    : "Estimated runtime: under 30 seconds. Automatic history saving is disabled."}
+              </p>
+            </div>
           </aside>
         </div>
       </div>
@@ -1534,9 +1539,8 @@ function LiveRequirement({
 }) {
   return (
     <span
-      className={`live-requirement ${
-        complete ? "complete" : ""
-      }`}
+      className={`live-requirement ${complete ? "complete" : ""
+        }`}
     >
       {complete ? (
         <Check size={11} />

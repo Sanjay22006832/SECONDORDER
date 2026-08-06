@@ -6,10 +6,12 @@ import {
 } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
+import GlobalNavigation from "./components/GlobalNavigation";
 
 import LandingPage from "./pages/LandingPage";
 import CommandCenter from "./pages/CommandCenter";
 import NewAnalysis from "./pages/NewAnalysis";
+import NewAnalysisLanding from "./pages/NewAnalysisLanding";
 import DecisionRoom from "./pages/DecisionRoom";
 import DecisionHistory from "./pages/DecisionHistory";
 import ModelIntelligence from "./pages/ModelIntelligence";
@@ -66,7 +68,10 @@ function AppRoutes() {
     <div className="app-shell">
       <Sidebar />
 
-      <Routes>
+      <div className="workspace-canvas">
+        <GlobalNavigation />
+
+        <Routes>
         <Route
           path="/command-center"
           element={<CommandCenter />}
@@ -79,6 +84,21 @@ function AppRoutes() {
 
         <Route
           path="/new-analysis"
+          element={<NewAnalysisLanding />}
+        />
+
+        <Route
+          path="/new-analysis/demo"
+          element={<NewAnalysis />}
+        />
+
+        <Route
+          path="/new-analysis/live-api"
+          element={<NewAnalysis />}
+        />
+
+        <Route
+          path="/new-analysis/upload-dataset"
           element={<NewAnalysis />}
         />
 
@@ -103,7 +123,7 @@ function AppRoutes() {
         />
 
         <Route
-          path="/decision-room"
+          path="/decision-room/:id"
           element={<DecisionRoom />}
         />
 
@@ -111,7 +131,8 @@ function AppRoutes() {
           path="/help"
           element={<Help />}
         />
-      </Routes>
+        </Routes>
+      </div>
     </div>
   );
 }

@@ -1,707 +1,218 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import "./DecisionRoom2.css";
 
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
-  RotateCcw,
-  Sparkles,
-  GitCompareArrows,
-  Database,
+    ArrowLeft,
+    Sparkles,
+    Activity,
+    ShieldAlert,
+    BrainCircuit,
+    Database,
 } from "lucide-react";
 
+const API = "http://127.0.0.1:8000";
+
 export default function DecisionRoom() {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const { id } = useParams();
+    console.log("DecisionRoom mounted");
+    console.log("DecisionRoom ID:", id);
 
-  const storedResult = localStorage.getItem(
-    "secondorder_result"
-  );
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  if (!storedResult) {
+    useEffect(() => {
+        async function loadAnalysis() {
+            try {
+                const response = await fetch(`${API}/history/${id}`);
+                const data = await response.json();
+                console.log("GET /history response:", data);
+                if (data.status === "success") {
+                    setResult(data.analysis);
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadAnalysis();
+    }, [id]);
+
+    if (loading) {
+        return <main className="product-main"><div className="page-content"><h2>Loading Decision...</h2></div></main>;
+    }
+
+    if (!result) {
+        return <main className="product-main"><div className="page-content"><h2>Analysis not found</h2><button className="primary-button" onClick={() => navigate("/history")}>Back</button></div></main>;
+    }
+
+
+    const analysis = result.analysis || {};
+    const context = result;
+    const insights = analysis.insights || {};
+    const reasoning = analysis.ai_reasoning || {};
+    const decision = analysis.prediction || "UNKNOWN";
+    const confidence = (Number(analysis.confidence || 0) * 100).toFixed(1);
+    const probabilities = analysis.class_probabilities || {};
+
     return (
-      <main className="product-main">
-        <div className="page-content">
-          <h2>No analysis found</h2>
-
-          <p className="decision-room-muted">
-            Run a new analysis to generate a decision.
-          </p>
-
-          <button
-            className="primary-button"
-            onClick={() =>
-              navigate("/new-analysis")
-            }
-          >
-            Start New Analysis
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  let result;
-
-  try {
-    result = JSON.parse(storedResult);
-  } catch {
-    result = null;
-  }
-
-  if (!result) {
-    return (
-      <main className="product-main">
-        <div className="page-content">
-          <h2>
-            Analysis could not be loaded
-          </h2>
-
-          <button
-            className="primary-button"
-            onClick={() =>
-              navigate("/new-analysis")
-            }
-          >
-            Start New Analysis
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  const analysis = result.analysis || {};
-  const context = result.context || {};
-  const insights = analysis.insights || {};
-  const aiReasoning = analysis.ai_reasoning || {};
-
-  const decision =
-    analysis.prediction || "UNKNOWN";
-
-  const confidence = (
-    Number(analysis.confidence || 0) * 100
-  ).toFixed(1);
-
-  /*
- 
-  Use dynamic ML reasoning first.
-  If unavailable, use old warning reasons.
-  */
-
-
-
-  const classProbabilities =
-    analysis.class_probabilities || {};
-
-  const analysisName =
-    context.analysis_name ||
-    "Untitled Analysis";
-
-  const beforeVersion =
-    context.before_version || "Before";
-
-  const afterVersion =
-    context.after_version || "After";
-
-  const changeDescription =
-    context.change_description ||
-    "No change description provided.";
-
-  const dataSource =
-    context.data_source || "simulation";
-
-  return (
-    <main className="product-main">
-      <header className="topbar">
-        <button
-          className="decision-back-button"
-          onClick={() =>
-            navigate("/new-analysis")
-          }
-        >
-          <ArrowLeft size={16} />
-          New Analysis
-        </button>
-
-        <span className="analysis-draft">
-          Analysis complete
-        </span>
-      </header>
-
-      <div className="page-content decision-room-page">
-
-        {/* ======================================
-            PAGE HEADING
-        ====================================== */}
-
-        <section className="decision-room-heading">
-          <div>
-            <span className="eyebrow">
-              DECISION ROOM
-            </span>
-
-            <h2>{analysisName}</h2>
-
-            <p>
-              Review the system change,
-              deployment evidence, and Random
-              Forest prediction.
-            </p>
-          </div>
-
-          <button
-            className="secondary-button"
-            onClick={() =>
-              navigate("/new-analysis")
-            }
-          >
-            <RotateCcw size={15} />
-            Run another analysis
-          </button>
-        </section>
-
-        {/* ======================================
-            DEPLOYMENT CONTEXT
-        ====================================== */}
-
-        <section className="deployment-context-card">
-          <div className="deployment-context-main">
-            <div className="deployment-context-icon">
-              <GitCompareArrows size={20} />
-            </div>
-
-            <div>
-              <span className="eyebrow">
-                SYSTEM CHANGE
-              </span>
-
-              <h3>
-                {beforeVersion}
-                {" → "}
-                {afterVersion}
-              </h3>
-
-              <p>{changeDescription}</p>
-            </div>
-          </div>
-
-          <div className="deployment-context-source">
-            <Database size={15} />
-
-            <div>
-              <span>DATA SOURCE</span>
-
-              <strong>
-                {formatDataSource(dataSource)}
-              </strong>
-            </div>
-          </div>
-        </section>
-
-        {/* ======================================
-            MAIN ML DECISION
-        ====================================== */}
-
-        <section
-          className={`decision-result-hero ${getDecisionClass(
-            decision
-          )}`}
-        >
-          <div>
-            <div className="analysis-label">
-              <Sparkles size={15} />
-              ML DEPLOYMENT DECISION
-            </div>
-
-            <h1>{decision}</h1>
-
-            <p className="decision-result-summary">
-              {analysis.summary ||
-                "The deployment signals were analyzed successfully."}
-            </p>
-
-            <div className="decision-meta-row">
-              <div>
-                <span>
-                  Version transition
-                </span>
-
-                <strong>
-                  {beforeVersion}
-                  {" → "}
-                  {afterVersion}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Signals analyzed
-                </span>
-
-                <strong>
-                  {result.signals_generated ||
-                    0}
-                </strong>
-              </div>
-
-              <div>
-                <span>Risk level</span>
-
-                <strong>
-                  {analysis.risk_level ||
-                    "UNKNOWN"}
-                </strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="decision-confidence">
-            <span>
-              MODEL CONFIDENCE
-            </span>
-
-            <strong>
-              {confidence}%
-            </strong>
-
-            <p>
-              Random Forest prediction
-            </p>
-          </div>
-        </section>
-
-        {/* ======================================
-            DECISION CONTENT
-        ====================================== */}
-
-        <section className="decision-room-grid">
-
-          {/* LEFT COLUMN */}
-
-          <div className="decision-main-column">
-
-            {/* SIGNAL EVIDENCE */}
-
-            <div className="decision-section-heading">
-              <span className="eyebrow">
-                SIGNAL EVIDENCE
-              </span>
-
-              <h3>What changed?</h3>
-            </div>
-
-            <div className="decision-metric-grid">
-
-              <DecisionMetric
-                title="Clicks"
-                data={insights.clicks}
-              />
-
-              <DecisionMetric
-                title="Conversion Rate"
-                data={insights.conversion_rate}
-              />
-
-              <DecisionMetric
-                title="Latency"
-                data={insights.latency}
-              />
-
-              <DecisionMetric
-                title="Error Rate"
-                data={insights.error_rate}
-              />
-
-            </div>
-
-            <div className="executive-summary-card">
-
-              <div className="decision-card-icon">
-                <Sparkles size={18} />
-              </div>
-
-              <div>
-
-                <span className="eyebrow">
-                  AI EXECUTIVE SUMMARY
-                </span>
-
-                <h3>
-                  Executive Summary
-                </h3>
-
-                <p className="summary-text">
-                  {aiReasoning.summary}
-                </p>
-
-              </div>
-
-            </div>
-
-            {/* ==================================
-                DYNAMIC DECISION REASONING
-            ================================== */}
-
-            <div className="decision-explanation-card">
-              <div className="decision-card-icon">
-                <Sparkles size={19} />
-              </div>
-
-              <div>
-                <span className="eyebrow">
-                  AI DEPLOYMENT ANALYSIS
-                </span>
-
-                <h3>
-                  Engineering assessment
-                </h3>
-
-                <div className="ai-analysis-section">
-                  <h4>Deployment Intent</h4>
-
-                  <p>
-                    {aiReasoning.deployment_intent ||
-                      "Unknown"}
-                  </p>
-                </div>
-
-                <div className="ai-analysis-section">
-                  <h4>
-                    Components Affected
-                  </h4>
-
-                  {(aiReasoning.components || [])
-                    .length > 0 ? (
-                    <ul>
-                      {aiReasoning.components.map(
-                        (component) => (
-                          <li key={component}>
-                            {component}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  ) : (
-                    <p>
-                      No components identified.
-                    </p>
-                  )}
-                </div>
-
-                <div className="ai-analysis-section">
-                  <h4>
-                    Positive Impacts
-                  </h4>
-
-                  {(aiReasoning.positive_impacts ||
-                    []).length > 0 ? (
-                    <ul>
-                      {aiReasoning.positive_impacts.map(
-                        (impact) => (
-                          <li key={impact}>
-                            {impact}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  ) : (
-                    <p>
-                      No positive impacts identified.
-                    </p>
-                  )}
-                </div>
-
-                <div className="ai-analysis-section">
-                  <h4>
-                    Potential Risks
-                  </h4>
-
-                  {(aiReasoning.risks || [])
-                    .length > 0 ? (
-                    <ul>
-                      {aiReasoning.risks.map(
-                        (risk) => (
-                          <li key={risk}>
-                            {risk}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  ) : (
-                    <p>
-                      No significant risks identified.
-                    </p>
-                  )}
-                </div>
-
-
-              </div>
-            </div>
-          </div>
-          {/* ====================================
-              RIGHT COLUMN
-          ==================================== */}
-
-          <aside className="decision-side-column">
-            <div className="decision-side-card">
-
-              <div className="decision-card-icon">
-                <Sparkles size={18} />
-              </div>
-
-              <span className="eyebrow">
-                AI RECOMMENDATION
-              </span>
-
-              <div className="recommendation-content">
-
-                <div className="recommendation-text">
-                  {aiReasoning.recommendation}
-                </div>
-
-                <div className="recommendation-meta">
-
-                  <div
-                    className={`risk-pill ${(
-                      analysis.risk_level || ""
-                    ).toLowerCase()}`}
-                  >
-                    {analysis.risk_level || "UNKNOWN"}
-                  </div>
-
-                  <div className="confidence-pill">
-                    Confidence {(analysis.confidence * 100).toFixed(1)}%
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* ==================================
-                ML CLASS PROBABILITIES
-            ================================== */}
-
-            <div className="decision-side-card">
-              <span className="eyebrow">
-                ML PREDICTION
-              </span>
-
-              <h3>
-                Outcome probabilities
-              </h3>
-
-              {Object.keys(
-                classProbabilities
-              ).length > 0 ? (
-                <div className="probability-list">
-                  {Object.entries(
-                    classProbabilities
-                  ).map(
-                    ([
-                      className,
-                      probability,
-                    ]) => {
-                      const percentage =
-                        Number(probability) *
-                        100;
-
-                      const isWinner =
-                        className === decision;
-
-                      return (
-                        <div
-                          className={`probability-item ${isWinner
-                            ? "winner"
-                            : ""
-                            }`}
-                          key={className}
-                        >
-                          <div className="probability-header">
-                            <span>
-                              {className}
-                            </span>
-
-                            <strong>
-                              {percentage.toFixed(
-                                1
-                              )}
-                              %
-                            </strong>
-                          </div>
-
-                          <div className="probability-track">
-                            <div
-                              className="probability-fill"
-                              style={{
-                                width: `${percentage}%`,
-                              }}
-                            />
-                          </div>
+        <main className="product-main decision-workspace">
+            <div className="page-content decision-workspace-content">
+                <header className="decision-topbar">
+                    <button className="secondary-button" onClick={() => navigate("/history")}>
+                        <ArrowLeft size={16} /> Decision History
+                    </button>
+                    <span className="decision-topbar-status">Analysis complete</span>
+                </header>
+
+                <section className="decision-header">
+                    <div className="decision-header-left">
+                        <span className="eyebrow">Deployment decision</span>
+                        <div className="decision-heading-row">
+                            <h1>{decision}</h1>
+                            <span className="decision-live-indicator"><span /> AI reviewed</span>
                         </div>
-                      );
-                    }
-                  )}
+                        <p>{reasoning.summary || analysis.summary || "Deployment analysis completed."}</p>
+                    </div>
+                    <div className="decision-header-right">
+                        <div className="decision-stat"><span>Confidence</span><strong>{confidence}%</strong></div>
+                        <div className="decision-stat"><span>Risk level</span><strong>{analysis.risk_level || "UNKNOWN"}</strong></div>
+                        <div className="decision-stat"><span>Data source</span><strong>{context.data_source || "Simulation"}</strong></div>
+                        <div className="decision-stat"><span>Version transition</span><strong>{context.before_version || "Before"} → {context.after_version || "After"}</strong></div>
+                    </div>
+                </section>
+
+                <div className="decision2-dashboard">
+                    <div className="dashboard-left">
+                        <section className="signal-section">
+                            <div className="section-header">
+                                <div><span className="eyebrow">Signal evidence</span><h2>Deployment signals at a glance</h2></div>
+                                <span className="section-note">Before → after comparison</span>
+                            </div>
+                            <div className="metric-grid">
+                                <article className="metric-card">
+                                    <div className="metric-title"><Activity size={18} /><span>Clicks</span></div>
+                                    <div className="metric-values"><div><label>Before</label><h3>{Number(insights.clicks?.before || 0).toFixed(3)}</h3></div><div><label>After</label><h3>{Number(insights.clicks?.after || 0).toFixed(3)}</h3></div></div>
+                                    <div className="metric-footer"><span className="metric-change">{Number(insights.clicks?.percentage_change || 0).toFixed(2)}%</span><span className={`metric-status ${insights.clicks?.impact || "neutral"}`}>{insights.clicks?.impact || "Unknown"}</span></div>
+                                </article>
+                                <article className="metric-card">
+                                    <div className="metric-title"><Activity size={18} /><span>Conversion rate</span></div>
+                                    <div className="metric-values"><div><label>Before</label><h3>{Number(insights.conversion_rate?.before || 0).toFixed(4)}</h3></div><div><label>After</label><h3>{Number(insights.conversion_rate?.after || 0).toFixed(4)}</h3></div></div>
+                                    <div className="metric-footer"><span className="metric-change">{Number(insights.conversion_rate?.percentage_change || 0).toFixed(2)}%</span><span className={`metric-status ${insights.conversion_rate?.impact || "neutral"}`}>{insights.conversion_rate?.impact || "Unknown"}</span></div>
+                                </article>
+                                <article className="metric-card">
+                                    <div className="metric-title"><Database size={18} /><span>Latency</span></div>
+                                    <div className="metric-values"><div><label>Before</label><h3>{Number(insights.latency?.before || 0).toFixed(3)}</h3></div><div><label>After</label><h3>{Number(insights.latency?.after || 0).toFixed(3)}</h3></div></div>
+                                    <div className="metric-footer"><span className="metric-change">{Number(insights.latency?.percentage_change || 0).toFixed(2)}%</span><span className={`metric-status ${insights.latency?.impact || "neutral"}`}>{insights.latency?.impact || "Unknown"}</span></div>
+                                </article>
+                                <article className="metric-card">
+                                    <div className="metric-title"><ShieldAlert size={18} /><span>Error rate</span></div>
+                                    <div className="metric-values"><div><label>Before</label><h3>{Number(insights.error_rate?.before || 0).toFixed(4)}</h3></div><div><label>After</label><h3>{Number(insights.error_rate?.after || 0).toFixed(4)}</h3></div></div>
+                                    <div className="metric-footer"><span className="metric-change">{Number(insights.error_rate?.percentage_change || 0).toFixed(2)}%</span><span className={`metric-status ${insights.error_rate?.impact || "neutral"}`}>{insights.error_rate?.impact || "Unknown"}</span></div>
+                                </article>
+                            </div>
+                        </section>
+
+                        <section className="ai-incident-report">
+                            <div className="incident-report-header">
+                                <div>
+                                    <span className="eyebrow">AI incident report</span>
+                                    <h2>AI Deployment Investigation</h2>
+                                </div>
+                                <div className="incident-severity">
+                                    <span>Incident severity</span>
+                                    <strong>{analysis.risk_level || "UNKNOWN"}</strong>
+                                </div>
+                            </div>
+
+                            <div className="incident-status">
+                                <Sparkles size={18} />
+                                <div>
+                                    <span>Deployment status</span>
+                                    <p>{decision === "ROLLBACK" || decision === "RISKY CHANGE" ? "The deployment completed successfully, but the AI detected production regressions immediately after release." : decision === "REVIEW REQUIRED" ? "The deployment completed successfully, but the AI detected a mixed production signal that needs engineering review." : "The deployment completed successfully, with no material production regressions detected by the AI."}</p>
+                                </div>
+                            </div>
+
+                            <div className="incident-report-grid">
+                                <article className="incident-primary-cause">
+                                    <span className="incident-label">Primary root cause</span>
+                                    <p>{insights.latency?.impact === "worsened" && insights.error_rate?.impact === "worsened" ? "AI inference: the deployment most likely introduced a backend performance regression. Slower responses appear to be contributing to additional request failures and a degraded user experience." : insights.error_rate?.impact === "worsened" ? "AI inference: the deployment most likely introduced a reliability regression. Increased request failures are likely disrupting the user journey after release." : insights.latency?.impact === "worsened" ? "AI inference: the deployment most likely introduced a performance regression. Slower application responses may be degrading the experience for active users." : "AI inference: no single technical root cause can be established from deployment metrics alone. Repository Intelligence is required for a code-level explanation."}</p>
+                                </article>
+
+                                <article className="incident-confidence">
+                                    <span className="incident-label">AI confidence</span>
+                                    <strong>{confidence}%</strong>
+                                    <span>Random Forest decision confidence</span>
+                                </article>
+
+                                <article className="incident-panel incident-findings">
+                                    <span className="incident-label">Observed behaviour</span>
+                                    <ul>
+                                        <li>{insights.clicks?.impact === "worsened" ? "User engagement dropped after deployment." : insights.clicks?.impact === "improved" ? "User engagement improved after deployment." : "User engagement remained broadly stable after deployment."}</li>
+                                        <li>{insights.conversion_rate?.impact === "worsened" ? "The user journey is converting less effectively after release." : insights.conversion_rate?.impact === "improved" ? "The user journey is converting more effectively after release." : "Conversion behaviour remained broadly stable after deployment."}</li>
+                                        <li>{insights.latency?.impact === "worsened" ? "API response time increased significantly after deployment." : insights.latency?.impact === "improved" ? "Application response time improved after deployment." : "Application response time remained broadly stable after deployment."}</li>
+                                        <li>{insights.error_rate?.impact === "worsened" ? "The application is experiencing a higher failure rate after deployment." : insights.error_rate?.impact === "improved" ? "The application is experiencing fewer request failures after deployment." : "Application reliability remained broadly stable after deployment."}</li>
+                                    </ul>
+                                </article>
+
+                                <article className="incident-panel incident-actions">
+                                    <span className="incident-label">Immediate actions</span>
+                                    <div className="action-priority"><strong>Immediate</strong><ol><li>{reasoning.recommendation || "No immediate action is available."}</li></ol></div>
+                                    <div className="action-priority"><strong>Investigation</strong><p>Commit history is unavailable for this deployment. Additional repository context is required.</p></div>
+                                    <div className="action-priority"><strong>Validation</strong><p>Validation guidance cannot be generated without repository and release metadata.</p></div>
+                                </article>
+
+                                <article className="incident-panel incident-causes">
+                                    <span className="incident-label">Possible technical causes</span>
+                                    {(analysis.likely_changes || []).length > 0 ? (
+                                        <div className="incident-badges">{analysis.likely_changes.map((cause, index) => <span key={`${cause}-${index}`}>{cause}</span>)}</div>
+                                    ) : <p>Repository intelligence unavailable. Repository data was not included in this analysis.</p>}
+                                </article>
+
+                                <article className="incident-panel incident-business-impact">
+                                    <span className="incident-label">Expected user impact</span>
+                                    <ul>
+                                        {insights.latency?.impact === "worsened" && <li>Users may experience slower application responses.</li>}
+                                        {insights.error_rate?.impact === "worsened" && <li>Users may encounter more failed requests.</li>}
+                                        {insights.conversion_rate?.impact === "worsened" && <li>Customer conversions may be reduced.</li>}
+                                        {insights.clicks?.impact === "worsened" && <li>User engagement may decline.</li>}
+                                        {!["worsened"].includes(insights.latency?.impact) && !["worsened"].includes(insights.error_rate?.impact) && !["worsened"].includes(insights.conversion_rate?.impact) && !["worsened"].includes(insights.clicks?.impact) && <li>No material user-impact regression was detected in the available deployment signals.</li>}
+                                    </ul>
+                                </article>
+                            </div>
+
+                            <div className="incident-expected-outcome">
+                                <BrainCircuit size={18} />
+                                <div><span className="incident-label">Recovery expectation</span><p>Recovery estimate unavailable until additional deployment intelligence becomes available.</p></div>
+                            </div>
+                        </section>
+
+                    </div>
+
+                    <aside className="dashboard-right">
+                        <section className="sidebar-card"><span className="eyebrow">Random Forest model</span><h2>Outcome confidence</h2><div className="prediction-list">{Object.entries(probabilities).map(([label, probability]) => { const value = Number(probability) * 100; const winner = label === decision; return <div key={label} className="prediction-row"><div className="prediction-header"><span>{label}</span><strong>{value.toFixed(1)}%</strong></div><div className="prediction-track"><div className={`prediction-fill ${winner ? "winner" : ""}`} style={{ width: `${value}%` }} /></div></div>; })}</div></section>
+                    </aside>
                 </div>
-              ) : (
-                <p className="decision-room-muted">
-                  Run a new analysis to
-                  generate Random Forest class
-                  probabilities.
-                </p>
-              )}
 
-              <div className="model-output-divider" />
+                <section className="engineering-section">
+                    <div className="section-header">
+                        <div>
+                            <span className="eyebrow">ENGINEERING ASSESSMENT</span>
+                            <h2>AI Deployment Analysis</h2>
+                        </div>
+                    </div>
+                    <div className="engineering-grid">
+                        <article className="engineering-card"><h3>Deployment Intent</h3><p>{reasoning.deployment_intent || "Unknown"}</p></article>
+                        <article className="engineering-card"><h3>Components Affected</h3>{(reasoning.components || []).length > 0 ? (<ul>{reasoning.components.map(component => (<li key={component}>{component}</li>))}</ul>) : (<p>None detected.</p>)}</article>
+                        <article className="engineering-card"><h3>Positive Impacts</h3>{(reasoning.positive_impacts || []).length > 0 ? (<ul>{reasoning.positive_impacts.map(item => (<li key={item}>{item}</li>))}</ul>) : (<p>No positive impacts detected.</p>)}</article>
+                        <article className="engineering-card"><h3>Potential Risks</h3>{(reasoning.risks || []).length > 0 ? (<ul>{reasoning.risks.map(risk => (<li key={risk}>{risk}</li>))}</ul>) : (<p>No significant risks.</p>)}</article>
+                    </div>
+                </section>
 
-              <div className="model-output-row">
-                <span>Model</span>
-
-                <strong>
-                  {analysis.model_info
-                    ?.name ||
-                    "Random Forest Classifier"}
-                </strong>
-              </div>
-
-              <div className="model-output-row">
-                <span>
-                  Model version
-                </span>
-
-                <strong>
-                  {analysis.model_info
-                    ?.version ||
-                    "1.0.0"}
-                </strong>
-              </div>
-
-              <div className="model-output-row">
-                <span>
-                  Outcome classes
-                </span>
-
-                <strong>
-                  {Object.keys(
-                    classProbabilities
-                  ).length || 4}
-                </strong>
-              </div>
-
-              <div className="model-output-row">
-                <span>
-                  Analysis status
-                </span>
-
-                <strong>
-                  Complete
-                </strong>
-              </div>
+                <footer className="decision-footer"><div><strong>SECONDORDER</strong><span>Decision Intelligence Platform</span></div><div className="footer-tags"><span>React</span><span>FastAPI</span><span>SQLite</span><span>Random Forest</span><span>Groq AI</span></div></footer>
             </div>
-          </aside>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-/*
-==========================================
-DECISION METRIC COMPONENT
-==========================================
-*/
-
-function DecisionMetric({
-  title,
-  data,
-}) {
-  if (!data) {
-    return (
-      <article className="decision-metric-card">
-        <span>{title}</span>
-
-        <strong>—</strong>
-
-        <p>No data</p>
-      </article>
+        </main>
     );
-  }
-
-  const percentage = Number(
-    data.percentage_change || 0
-  );
-
-  return (
-    <article className="decision-metric-card">
-      <span>{title}</span>
-
-      <strong>
-        {percentage > 0 ? "+" : ""}
-        {percentage.toFixed(1)}%
-      </strong>
-
-      <p>
-        {Number(
-          data.before || 0
-        ).toFixed(3)}
-
-        {" → "}
-
-        {Number(
-          data.after || 0
-        ).toFixed(3)}
-      </p>
-
-      <div
-        className={`decision-metric-status ${data.impact || ""
-          }`}
-      >
-        {data.impact || "unknown"}
-      </div>
-    </article>
-  );
-}
-
-/*
-==========================================
-FORMAT DATA SOURCE
-==========================================
-*/
-
-function formatDataSource(source) {
-  switch (source) {
-    case "simulation":
-      return "Demo Simulation";
-
-    case "api":
-      return "Live API";
-
-    case "csv":
-      return "Uploaded CSV";
-
-    default:
-      return source;
-  }
-}
-
-/*
-==========================================
-DECISION COLOR CLASS
-==========================================
-*/
-
-function getDecisionClass(decision) {
-  switch (decision) {
-    case "SAFE TO DEPLOY":
-      return "result-safe";
-
-    case "REVIEW REQUIRED":
-      return "result-review";
-
-    case "RISKY CHANGE":
-      return "result-risky";
-
-    case "ROLLBACK":
-      return "result-rollback";
-
-    default:
-      return "";
-  }
 }

@@ -31,13 +31,9 @@ export default function CommandCenter() {
   useEffect(() => {
     loadProductData();
 
-    const interval = setInterval(
-      loadProductData,
-      5000
-    );
-
-    return () => clearInterval(interval);
   }, []);
+
+
 
   async function loadProductData() {
     try {
@@ -90,18 +86,6 @@ export default function CommandCenter() {
     navigate("/history");
   }
 
-  if (loading) {
-    return (
-      <main className="product-main">
-        <div className="page-content">
-          <h2>
-            Connecting to SECONDORDER...
-          </h2>
-        </div>
-      </main>
-    );
-  }
-
   const latestAnalysis =
     latestResult?.analysis || analysis || {};
 
@@ -137,7 +121,7 @@ export default function CommandCenter() {
   const highRiskCount = history.filter(
     (item) =>
       item.analysis?.prediction ===
-        "RISKY CHANGE" ||
+      "RISKY CHANGE" ||
       item.analysis?.prediction === "ROLLBACK"
   ).length;
 
@@ -521,10 +505,10 @@ export default function CommandCenter() {
                 <strong>
                   {modelInfo.test_accuracy
                     ? `${(
-                        Number(
-                          modelInfo.test_accuracy
-                        ) * 100
-                      ).toFixed(1)}%`
+                      Number(
+                        modelInfo.test_accuracy
+                      ) * 100
+                    ).toFixed(1)}%`
                     : "—"}
                 </strong>
               </div>
@@ -633,9 +617,8 @@ function MetricCard({
       </p>
 
       <span
-        className={`metric-impact ${
-          data.impact || ""
-        }`}
+        className={`metric-impact ${data.impact || ""
+          }`}
       >
         {data.impact}
       </span>

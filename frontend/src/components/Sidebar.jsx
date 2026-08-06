@@ -191,19 +191,6 @@ export default function Sidebar() {
           </span>
         </button>
 
-        <div className="system-status">
-          <span className="status-dot" />
-
-          <div>
-            <strong>
-              System online
-            </strong>
-
-            <span>
-              Analysis service connected
-            </span>
-          </div>
-        </div>
       </div>
     </aside>
   );

@@ -1,349 +1,290 @@
-# ⚡ SECONDORDER – Decision Intelligence for System Changes
+# ⚡ SECONDORDER — Decision Intelligence for System Changes
 
-> ❝ A metric changed.
-> But did the system actually get better? ❞
+> **Don't just ask whether a metric changed. Ask whether the entire system became better.**
+
+SECONDORDER is a **Decision Intelligence Platform for evaluating system changes**.
+
+Modern applications generate dozens of signals when a new version, deployment, optimization, model, or infrastructure change is introduced. Individual metrics can improve while other critical signals deteriorate.
+
+SECONDORDER analyzes these signals together to answer a more useful engineering question:
+
+> **Given the evidence across the system, should this change be approved, rejected, or investigated further?**
+
+It combines **multi-signal analysis, before/after comparison, statistical evaluation, risk detection, machine learning, and explainable decision support** into a single workflow.
 
 ---
 
-## 🚨 The Problem Nobody Solves Properly
+## 🎯 Why SECONDORDER?
 
-Modern software changes every day.
-
-A new UI is deployed.
-A backend service is optimized.
-A database is indexed.
-A machine learning model is replaced.
-
-Then teams look at the metrics.
+Consider a backend optimization:
 
 ```text
-Clicks ↑          Looks good.
-Latency ↓         Looks good.
-Error Rate ↑      Wait...
-Conversion ↓      Now what?
+Latency        ↓ 25%     ✅
+Throughput     ↑ 18%     ✅
+Error Rate     ↑ 40%     🚨
 ```
 
-The signals disagree.
+A traditional dashboard shows three separate numbers.
 
-And the final decision is often made using one metric, a dashboard glance, or gut feeling.
+SECONDORDER evaluates the relationship between them.
 
-So we asked:
+A performance improvement may not be a successful deployment if it introduces unacceptable reliability risk.
 
-> **What if a system could look at every signal together and tell us whether a change should actually stay?**
-
----
-
-# 🧠 Meet SECONDORDER
-
-SECONDORDER is a **Decision Intelligence Platform for System Changes**.
-
-It does not simply tell you:
-
-> “The metric increased.”
-
-It asks the more important question:
-
-> **“Given everything that changed, should we keep this version or roll it back?”**
-
-SECONDORDER collects system metrics, compares behavior before and after a change, detects conflicting signals, analyzes risk, and produces an explainable decision.
-
-### The final answer:
-
-🟢 **APPROVE** — The change genuinely improved the system.
-
-🔴 **REJECT** — The change introduced unacceptable risk or regression.
-
-🟡 **UNCERTAIN** — The evidence is conflicting or statistically insufficient.
+The platform therefore focuses on **system-level outcomes rather than isolated metrics**.
 
 ---
 
-## ✨ Here's What Makes It Different
+# 🧠 Core Capabilities
 
-### 🔍 Multi-Signal Intelligence
+### 🔍 Multi-Signal Analysis
 
-SECONDORDER never trusts a single metric.
+SECONDORDER evaluates multiple system signals together instead of making decisions from a single metric.
 
-It evaluates engagement, conversion, latency, errors, and other signals together before making a decision.
+Current prototype signals include:
 
----
+* Clicks
+* Conversion Rate
+* Latency
+* Error Rate
 
-### ⚖️ Understands Trade-Offs
+The architecture can be extended to additional measurable signals such as:
 
-What happens when:
-
-```text
-Clicks ↑ 20%
-Latency ↓ 15%
-Error Rate ↑ 35%
-```
-
-A traditional dashboard shows three numbers.
-
-SECONDORDER asks:
-
-> **Is the improvement worth the risk?**
-
----
-
-### 📊 Before vs After Analysis
-
-Every system change is evaluated across two versions:
-
-```text
-BEFORE CHANGE  →  VERSION A
-AFTER CHANGE   →  VERSION B
-```
-
-The platform measures what actually changed between them.
-
----
-
-### 🧪 Statistical Validation
-
-A metric going up does not automatically mean the change worked.
-
-SECONDORDER checks whether the observed difference is meaningful or could simply be random variation.
-
----
-
-### 🤖 Machine Learning Decision Support
-
-The platform combines:
-
-* Multi-metric analysis
-* Percentage change detection
-* Statistical testing
-* Risk signals
-* Machine learning predictions
-
-to support the final decision.
-
----
-
-### ⚡ Real-Time Metric Ingestion
-
-External applications can continuously send metrics through a REST API.
-
-```text
-Application
-     ↓
-POST /ingest
-     ↓
-SECONDORDER
-     ↓
-Analysis
-     ↓
-Decision
-```
-
----
-
-# 🔄 How SECONDORDER Thinks
-
-```text
-SYSTEM CHANGE
-      ↓
-DATA COLLECTION
-      ↓
-SIGNAL PROCESSING
-      ↓
-BEFORE vs AFTER COMPARISON
-      ↓
-STATISTICAL ANALYSIS
-      ↓
-PATTERN + RISK DETECTION
-      ↓
-MACHINE LEARNING
-      ↓
-DECISION INTELLIGENCE
-      ↓
-APPROVE / REJECT / UNCERTAIN
-```
-
----
-
-## 📡 The Signals
-
-The current prototype evaluates:
-
-| Signal             | What Better Looks Like |
-| ------------------ | ---------------------- |
-| 🖱️ Clicks         | Higher ↑               |
-| 🎯 Conversion Rate | Higher ↑               |
-| ⚡ Latency          | Lower ↓                |
-| 🚨 Error Rate      | Lower ↓                |
-
-But SECONDORDER is not limited to these four metrics.
-
-The architecture can be extended to analyze:
-
-* CPU and memory usage
+* CPU utilization
+* Memory usage
 * API response time
 * Revenue
 * User retention
 * Infrastructure cost
 * Model accuracy
-* Failure rates
+* Failure rate
 * Queue performance
-* Any measurable system signal
 
 ---
 
-# 💡 Why This Matters
+### ⚖️ Trade-Off Detection
 
-Imagine deploying a backend optimization.
+Different signals can move in opposite directions.
 
-The result:
+For example:
 
 ```text
-Latency       ↓ 25%    ✅
-Throughput    ↑ 18%    ✅
-Error Rate    ↑ 40%    🚨
+Clicks          ↑ 20%
+Latency         ↓ 15%
+Error Rate      ↑ 35%
 ```
 
-Was the deployment successful?
-
-A performance dashboard might say yes.
-
-An error dashboard might say no.
-
-SECONDORDER evaluates the complete picture.
-
-Because:
-
-> ❝ Better performance does not matter if the system becomes less reliable. ❞
+SECONDORDER considers the improvement and the regression together rather than treating each metric independently.
 
 ---
 
-# 🏗️ The Architecture
+### 📊 Before vs After Analysis
+
+System behavior can be evaluated across two states:
 
 ```text
-┌────────────────────────────┐
-│    External Application    │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│      REST API /ingest      │
-│          FastAPI           │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│       Metric Storage       │
-│            CSV             │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│      Analysis Engine       │
-│  Before vs After Signals   │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│  Statistical + ML Engine   │
-│ Patterns • Risk • Testing  │
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│   Decision Intelligence    │
-│ APPROVE • REJECT • UNCERTAIN│
-└─────────────┬──────────────┘
-              │
-              ▼
-┌────────────────────────────┐
-│         Dashboard          │
-└────────────────────────────┘
+BEFORE CHANGE
+      ↓
+Version A
+      │
+      │  System Change
+      ▼
+Version B
+      ↓
+AFTER CHANGE
 ```
 
----
-
-# ⚙️ Real Technology. Real Decisions.
-
-| Layer            | Technology              | Purpose                   |
-| ---------------- | ----------------------- | ------------------------- |
-| API Layer        | FastAPI                 | Receive real-time metrics |
-| Data Layer       | Pandas + CSV            | Store and process signals |
-| Analysis Layer   | NumPy + Statistics      | Compare system versions   |
-| ML Layer         | Scikit-learn            | Detect decision patterns  |
-| Simulation Layer | Python + Requests       | Generate test scenarios   |
-| Interface        | HTML + CSS + JavaScript | Visualize decisions       |
+The analysis engine calculates how system behavior changed between the two versions.
 
 ---
 
-# 🧩 Project Structure
+### 🧪 Statistical Analysis
+
+Observed changes are evaluated using statistical methods rather than assuming that every percentage change represents a meaningful improvement.
+
+This helps distinguish potentially meaningful changes from variations that may simply be noise.
+
+---
+
+### 🤖 Machine Learning Decision Support
+
+SECONDORDER combines analytical signals with machine learning to provide additional decision support.
+
+The decision process can incorporate:
+
+* Metric changes
+* Multi-signal relationships
+* Statistical results
+* Risk indicators
+* Machine learning predictions
+* Overall system behavior
+
+The ML layer is intended as **decision support**, rather than replacing engineering judgment.
+
+---
+
+### 🧠 Explainable Decision Intelligence
+
+The goal is not simply to return a classification.
+
+The platform is designed to answer:
 
 ```text
-SECONDORDER/
-│
-├── main.py
-├── analysis.py
-├── simulator.py
-├── run_analysis.py
-├── ingested_data.csv
-├── requirements.txt
-├── .gitignore
-├── README.md
-│
-└── templates/
-    └── index.html
+What changed?
+        ↓
+Which signals improved?
+        ↓
+Which signals regressed?
+        ↓
+How significant are the changes?
+        ↓
+What risks were detected?
+        ↓
+What does the combined evidence suggest?
 ```
+
+The resulting decision is categorized as:
+
+🟢 **APPROVE** — Evidence supports keeping the change.
+
+🔴 **REJECT** — Evidence indicates unacceptable regression or risk.
+
+🟡 **UNCERTAIN** — Evidence is conflicting or insufficient for a confident decision.
 
 ---
 
-# 🚀 Run SECONDORDER
-
-## 1️⃣ Clone the Repository
-
-```bash
-git clone https://github.com/Sanjay22006832/SECONDORDER.git
-```
-
-## 2️⃣ Enter the Project
-
-```bash
-cd SECONDORDER
-```
-
-## 3️⃣ Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-## 4️⃣ Start the Intelligence Engine
-
-```bash
-uvicorn main:app --reload
-```
-
-## 5️⃣ Open the Dashboard
-
-Open the following address in your browser:
+# 🏗️ System Architecture
 
 ```text
-http://127.0.0.1:8000
+                    ┌─────────────────────┐
+                    │   External Systems  │
+                    │ Applications / APIs │
+                    └──────────┬──────────┘
+                               │
+                               │ POST /ingest
+                               ▼
+                    ┌─────────────────────┐
+                    │       FastAPI       │
+                    │     Backend API     │
+                    └──────────┬──────────┘
+                               │
+                ┌──────────────┴──────────────┐
+                │                             │
+                ▼                             ▼
+      ┌──────────────────┐          ┌──────────────────┐
+      │  Metric / Input  │          │     SQLite       │
+      │     Processing   │          │ Persistence Layer│
+      └────────┬─────────┘          └────────┬─────────┘
+               │                             │
+               └──────────────┬──────────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │   Analysis Engine   │
+                    │                     │
+                    │ Before / After      │
+                    │ Multi-Signal        │
+                    │ Statistics          │
+                    │ Risk Analysis       │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   ML / AI Support   │
+                    │                     │
+                    │ Pattern Detection   │
+                    │ Decision Support    │
+                    │ Reasoning           │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Decision Intelligence│
+                    │                     │
+                    │ APPROVE             │
+                    │ REJECT              │
+                    │ UNCERTAIN           │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │     Frontend        │
+                    │                     │
+                    │ Dashboard           │
+                    │ New Analysis        │
+                    │ Deployments         │
+                    │ Decision History    │
+                    │ Decision Room       │
+                    └─────────────────────┘
 ```
-
-## 6️⃣ Generate Live System Signals
-
-Keep the backend running and open another terminal:
-
-```bash
-python simulator.py
-```
-
-Watch SECONDORDER collect the signals, compare system behavior, and update its decision.
 
 ---
 
-# 🔌 API Endpoints
+# 🏛️ Engineering Architecture
+
+A major part of the V2 development was moving persistence and application state away from frontend-only storage.
+
+### Previous approach
+
+```text
+Frontend
+   ↓
+localStorage
+```
+
+### V2 approach
+
+```text
+Frontend
+   ↓
+FastAPI
+   ↓
+SQLite
+   ↓
+Persistent Analysis History
+```
+
+SQLite acts as the persistent source of truth for analysis history, while the FastAPI service layer handles communication between the frontend and backend.
+
+This makes the architecture more suitable for extending the prototype toward a multi-user or production-oriented system.
+
+---
+
+# 🖥️ Application
+
+SECONDORDER is structured around several workflows rather than a single dashboard.
+
+### Dashboard
+
+Provides a high-level view of system analysis and decisions.
+
+### New Analysis
+
+Supports initiating an analysis using structured inputs.
+
+The application supports different input workflows, including guided input and advanced structured JSON input.
+
+### Deployments
+
+Provides a dedicated workflow for tracking and evaluating system changes/deployments.
+
+### Decision History
+
+Stores and retrieves previous analysis results through the backend persistence layer.
+
+The frontend does not rely on localStorage as the source of truth for analysis history.
+
+### Decision Room
+
+Provides a dedicated space for reviewing decision-related information and analysis context.
+
+---
+
+# 🔌 API Architecture
+
+SECONDORDER exposes backend APIs through FastAPI.
 
 ## `POST /ingest`
 
-Receives system metrics from external applications.
+Accepts system metrics from external applications.
 
 Example:
 
@@ -355,85 +296,330 @@ Example:
 }
 ```
 
-## `GET /analyze`
-
-Analyzes the collected metrics and returns the latest decision intelligence results.
+The ingestion layer allows external systems to provide metrics to SECONDORDER instead of requiring all data to originate from the frontend.
 
 ---
 
-# 🌍 Where Could SECONDORDER Be Used?
+## Analysis APIs
 
-### 🎨 Frontend Changes
+The backend provides analysis-related API functionality used by the frontend to:
 
-Did the redesigned interface improve engagement without hurting conversion?
+* Submit analysis inputs
+* Run analysis
+* Retrieve results
+* Persist analysis history
+* Retrieve historical decisions
+* Support deployment-related workflows
+
+The API layer acts as the central communication layer between the frontend, analysis engine, and database.
+
+---
+
+# 🧩 Technology Stack
+
+| Layer             | Technology                      | Purpose                                            |
+| ----------------- | ------------------------------- | -------------------------------------------------- |
+| Backend API       | **FastAPI**                     | REST APIs and application backend                  |
+| Language          | **Python**                      | Core application and analysis logic                |
+| Database          | **SQLite**                      | Persistent analysis and decision history           |
+| Data Processing   | **Pandas / NumPy**              | Metric processing and numerical analysis           |
+| Statistics        | **Python statistical tooling**  | Before/after and significance analysis             |
+| Machine Learning  | **Scikit-learn**                | ML-based decision support                          |
+| AI Reasoning      | **Python / AI reasoning layer** | Decision interpretation and explanation            |
+| Frontend          | **HTML / CSS / JavaScript**     | Application interface                              |
+| API Communication | **REST / JSON**                 | Frontend-backend and external-system communication |
+| Simulation        | **Python / Requests**           | Generate and test system signals                   |
+| Server            | **Uvicorn**                     | Run FastAPI application                            |
+
+---
+
+# 📁 Project Structure
+
+The project has evolved beyond the original prototype into a backend + frontend application.
+
+A simplified view:
+
+```text
+SECONDORDER/
+│
+├── main.py
+├── analysis.py
+├── ai_reasoning.py
+├── database.py
+├── simulator.py
+├── run_analysis.py
+├── train_model.py
+├── secondorder_model.pkl
+├── history.db
+├── requirements.txt
+│
+├── frontend/
+│   └── ...
+│
+└── templates/
+    └── ...
+```
+
+The exact structure may continue to evolve as additional application features are developed.
+
+---
+
+# 🔄 End-to-End Flow
+
+A typical SECONDORDER workflow looks like:
+
+```text
+1. System Change
+       ↓
+2. Metrics Collected
+       ↓
+3. Metrics Ingested
+       ↓
+4. Before / After Data Prepared
+       ↓
+5. Multi-Signal Comparison
+       ↓
+6. Statistical Analysis
+       ↓
+7. Risk / Pattern Analysis
+       ↓
+8. ML Decision Support
+       ↓
+9. Decision Reasoning
+       ↓
+10. APPROVE / REJECT / UNCERTAIN
+       ↓
+11. Result Persisted
+       ↓
+12. Decision Available in History
+```
+
+---
+
+# 🧪 Example Decision
+
+Suppose a new backend version produces:
+
+```text
+                    BEFORE       AFTER
+
+Latency              180 ms      130 ms     ↓ 27.8%
+Error Rate             1.2%        2.8%     ↑ 133%
+Conversion             4.1%        4.4%     ↑ 7.3%
+Throughput            850/s       980/s     ↑ 15.3%
+```
+
+A simple performance dashboard could conclude:
+
+> "Latency and throughput improved."
+
+SECONDORDER considers the complete signal set.
+
+The increased error rate becomes an important risk signal.
+
+The final decision therefore depends on the **combined evidence**, not simply the number of improved metrics.
+
+---
+
+# 🌍 Potential Applications
+
+SECONDORDER can be applied to many types of engineering and product changes.
 
 ### ⚙️ Backend Deployments
 
-Did the optimization improve speed without increasing failures?
+Evaluate whether an optimization improves performance without increasing failures.
 
 ### 🗄️ Database Changes
 
-Did the new index improve query performance without creating resource problems?
+Evaluate whether indexing or query optimization improves response time without creating excessive resource usage.
 
-### 🤖 Machine Learning Models
+### 🎨 Frontend Releases
 
-Did the new model improve accuracy enough to justify increased latency and cost?
+Determine whether a UI change improves engagement without damaging conversion.
+
+### 🤖 ML Model Releases
+
+Compare model accuracy against latency, resource consumption, and other operational metrics.
 
 ### ☁️ Infrastructure Changes
 
-Did the new architecture improve reliability without making the system too expensive?
+Evaluate reliability and performance improvements against infrastructure cost.
 
-### 🧪 A/B Experiments
+### 🧪 Experiments
 
-Which version actually performs better when every important signal is considered?
-
----
-
-# 🔮 The Vision
-
-Today, teams have dashboards that tell them **what changed**.
-
-SECONDORDER is built for the next question:
-
-> **“What should we do about it?”**
-
-The future of monitoring is not more charts.
-
-It is systems that understand trade-offs, detect hidden risks, and help humans make better decisions.
+Compare competing versions using multiple system and business signals.
 
 ---
 
-# 🛣️ What's Next?
+# 🛠️ Running Locally
 
-* Real database integration
-* Production monitoring connectors
+## 1. Clone the repository
+
+```bash
+git clone https://github.com/Sanjay22006832/SECONDORDER.git
+```
+
+## 2. Enter the project
+
+```bash
+cd SECONDORDER
+```
+
+## 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+## 4. Start the backend
+
+```bash
+uvicorn main:app --reload
+```
+
+## 5. Open the application
+
+```text
+http://127.0.0.1:8000
+```
+
+For testing metric ingestion, the simulator can be run separately:
+
+```bash
+python simulator.py
+```
+
+---
+
+# 📈 What I Worked On
+
+SECONDORDER was developed as an end-to-end engineering project involving **backend development, data processing, machine learning, API design, database persistence, and frontend integration**.
+
+Key areas of work include:
+
+* Designing the overall decision-intelligence workflow
+* Building the FastAPI backend
+* Developing multi-signal analysis logic
+* Implementing before/after system comparisons
+* Integrating statistical analysis
+* Implementing machine learning decision support
+* Building metric ingestion through REST APIs
+* Designing the SQLite persistence layer
+* Migrating analysis history from frontend localStorage to backend persistence
+* Connecting frontend workflows to backend APIs
+* Building analysis and decision-history workflows
+* Developing the Deployments workflow
+* Building simulation tools for testing system signals
+* Structuring the application for future production deployment
+
+---
+
+# 🧠 Engineering Concepts Demonstrated
+
+SECONDORDER demonstrates practical experience with:
+
+```text
+Backend Engineering
+        │
+        ├── REST APIs
+        ├── FastAPI
+        ├── API / Frontend integration
+        └── Data persistence
+                │
+                ▼
+Data Engineering
+        │
+        ├── Metric ingestion
+        ├── Data processing
+        ├── Before / After analysis
+        └── Structured storage
+                │
+                ▼
+Machine Learning
+        │
+        ├── Feature-based decision support
+        ├── Pattern detection
+        └── Model inference
+                │
+                ▼
+Decision Intelligence
+        │
+        ├── Multi-signal reasoning
+        ├── Risk analysis
+        ├── Trade-off evaluation
+        └── Explainable decisions
+                │
+                ▼
+Application Engineering
+        │
+        ├── Frontend
+        ├── Backend
+        ├── Database
+        └── End-to-end workflows
+```
+
+---
+
+# 🚧 Future Development
+
+The project can be extended toward production-grade decision intelligence with:
+
+* Production monitoring integrations
 * Custom metric configuration
 * Advanced anomaly detection
-* Experiment history and version tracking
 * CI/CD integration
 * Cloud deployment
-* AI-generated decision explanations
+* More sophisticated statistical experimentation
+* Additional ML models
 * Automated rollback recommendations
+* Real-time monitoring
+* Role-based access control
+* Multi-user support
+* Production observability
+* Automated decision explanations
+
+These are **future directions**, not claims of currently completed functionality.
 
 ---
 
-# 👨‍💻 Built By
+# 🔮 Vision
 
-### **M Sanjay**
+Traditional monitoring systems answer:
 
-B.Tech – Artificial Intelligence and Machine Learning
+> **"What changed?"**
+
+SECONDORDER aims to answer:
+
+> **"What changed, why does it matter, and what should we do about it?"**
+
+The long-term vision is a system that can evaluate complex engineering changes across technical and business signals and provide decision support that is:
+
+**Evidence-based.
+Multi-signal.
+Risk-aware.
+Explainable.**
+
+---
+
+# 👨‍💻 Contributors
+
+### M Sanjay
+
+**B.Tech — Artificial Intelligence and Machine Learning**
+
 GitHub: [@Sanjay22006832](https://github.com/Sanjay22006832)
 
-### **Kishore N**
+### Kishore N
 
-B.Tech – Artificial Intelligence and Machine Learning
+**B.Tech — Artificial Intelligence and Machine Learning**
+
 GitHub: [@nkishore2210](https://github.com/nkishore2210)
 
 ---
 
-> ❝ Don't ask whether one metric improved.
-> Ask whether the entire system became better. ❞
-
-# ⚡ SECONDORDER
-
-### **See beyond the first result.**
+> ### ⚡ SECONDORDER
+>
+> **See beyond the first result.**
+>
+> *Don't ask whether one metric improved.*
+> *Ask whether the entire system became better.*

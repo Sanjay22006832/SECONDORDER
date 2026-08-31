@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -13,6 +13,8 @@ import {
   ShieldAlert,
   Sparkles,
 } from "lucide-react";
+
+import { getHistory } from "../services/api";
 
 const outcomeClasses = [
   {
@@ -51,16 +53,23 @@ const featureLabels = {
 export default function ModelIntelligence() {
   const navigate = useNavigate();
 
-  const storedResult = useMemo(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem(
-          "secondorder_result"
-        ) || "null"
-      );
-    } catch {
-      return null;
+  const [storedResult, setStoredResult] = useState(null);
+
+  useEffect(() => {
+    async function loadModelData() {
+      try {
+        const response = await getHistory();
+        if (response.status === "success" && response.history?.length > 0) {
+          setStoredResult(response.history[0]);
+        } else {
+          setStoredResult(null);
+        }
+      } catch {
+        setStoredResult(null);
+      }
     }
+
+    loadModelData();
   }, []);
 
   const analysis =

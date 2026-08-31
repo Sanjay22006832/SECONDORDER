@@ -4,9 +4,10 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Request,
 )
+from fastapi.responses import FileResponse, JSONResponse
 
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -37,13 +38,30 @@ app = FastAPI(
 initialize_database()
 
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+    print(f"❌ Unhandled Backend Error: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected server error occurred. Please try again."},
+    )
+
+
 # ==================================================
 # CORS
 # ==================================================
 
+raw_origins = os.getenv("CORS_ORIGINS", "*")
+allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins if allowed_origins else ["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -93,6 +111,9 @@ live_session = {
     "active": False,
     "started_at": None,
     "signals_received": 0,
+    "analysis_name": "",
+    "before_version": "",
+    "after_version": "",
     "change_description": "",
 }
 
@@ -258,6 +279,9 @@ def start_live_session(
 
     live_session["signals_received"] = 0
 
+    live_session["analysis_name"] = context.analysis_name.strip()
+    live_session["before_version"] = context.before_version.strip()
+    live_session["after_version"] = context.after_version.strip()
     live_session["change_description"] = context.change_description.strip()
 
     print("\n" + "=" * 60)
@@ -477,11 +501,11 @@ def get_live_analysis():
     print("💾 Saving analysis to SQLite...")
     analysis_id = save_analysis(
         {
-            "analysis_name": "Live API Analysis",
-            "before_version": "Before",
-            "after_version": "After",
+            "analysis_name": live_session.get("analysis_name") or "Live API Analysis",
+            "before_version": live_session.get("before_version") or "Before",
+            "after_version": live_session.get("after_version") or "After",
             "data_source": "api",
-            "change_description": live_session["change_description"],
+            "change_description": live_session.get("change_description", ""),
         },
         result,
     )
@@ -566,11 +590,11 @@ def run_demo_simulation(
     print("💾 Saving simulation to SQLite...")
     analysis_id = save_analysis(
         {
-            "analysis_name": context.analysis_name,
-            "before_version": context.before_version,
-            "after_version": context.after_version,
+            "analysis_name": context.analysis_name.strip() or "Demo Simulation",
+            "before_version": context.before_version.strip() or "v1.0 Baseline",
+            "after_version": context.after_version.strip() or "v1.1 Candidate",
             "data_source": "simulation",
-            "change_description": context.change_description,
+            "change_description": context.change_description.strip(),
         },
         result,
     )
@@ -594,6 +618,9 @@ def run_demo_simulation(
 async def upload_csv(
     file: UploadFile = File(...),
     change_description: str = Form(""),
+    analysis_name: str = Form(""),
+    before_version: str = Form(""),
+    after_version: str = Form(""),
 ):
 
     live_session["active"] = False
@@ -769,11 +796,11 @@ async def upload_csv(
 
     analysis_id = save_analysis(
         {
-            "analysis_name": file.filename.replace(".csv", ""),
-            "before_version": "CSV Import",
-            "after_version": "Analyzed",
+            "analysis_name": analysis_name.strip() or file.filename.replace(".csv", ""),
+            "before_version": before_version.strip() or "CSV Import",
+            "after_version": after_version.strip() or "Analyzed",
             "data_source": "csv",
-            "change_description": change_description,
+            "change_description": change_description.strip(),
         },
         result,
     )
@@ -867,4 +894,12 @@ def dashboard():
         "index.html",
     )
 
-    return FileResponse(file_path)
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+
+    return {
+        "status": "online",
+        "service": "SECONDORDER Analysis API",
+        "version": "1.0.0",
+        "docs": "/docs",
+    }

@@ -17,7 +17,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
-import { getAnalysis } from "../services/api";
+import { getAnalysis, getHistory } from "../services/api";
 
 export default function CommandCenter() {
   const navigate = useNavigate();
@@ -46,20 +46,13 @@ export default function CommandCenter() {
     }
 
     try {
-      const savedLatest = JSON.parse(
-        localStorage.getItem(
-          "secondorder_result"
-        ) || "null"
-      );
+      const historyResponse = await getHistory();
 
-      const savedHistory = JSON.parse(
-        localStorage.getItem(
-          "secondorder_history"
-        ) || "[]"
-      );
-
-      setLatestResult(savedLatest);
-      setHistory(savedHistory);
+      if (historyResponse.status === "success") {
+        const historyList = historyResponse.history || [];
+        setHistory(historyList);
+        setLatestResult(historyList.length > 0 ? historyList[0] : null);
+      }
     } catch {
       setLatestResult(null);
       setHistory([]);
@@ -74,16 +67,16 @@ export default function CommandCenter() {
       return;
     }
 
+    if (latestResult?.id) {
+      navigate(`/decision-room/${latestResult.id}`);
+      return;
+    }
+
     navigate("/decision-room");
   }
 
-  function openHistoryFilter(filter) {
-    localStorage.setItem(
-      "secondorder_history_filter",
-      filter
-    );
-
-    navigate("/history");
+  function openHistoryFilter() {
+    navigate("/deployments");
   }
 
   const latestAnalysis =
@@ -374,7 +367,7 @@ export default function CommandCenter() {
               <button
                 className="command-text-button"
                 onClick={() =>
-                  navigate("/history")
+                  navigate("/deployments")
                 }
               >
                 View all
@@ -639,10 +632,10 @@ function MetricCard({
 }
 
 function openSavedDecision(item, navigate) {
-  localStorage.setItem(
-    "secondorder_result",
-    JSON.stringify(item)
-  );
+  if (item?.id) {
+    navigate(`/decision-room/${item.id}`);
+    return;
+  }
 
   navigate("/decision-room");
 }

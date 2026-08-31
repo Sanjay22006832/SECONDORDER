@@ -9,19 +9,16 @@ import {
   Check,
   FileText,
   X,
-  Radio,
-  Circle,
   Copy,
-  StopCircle,
+  Radio,
 } from "lucide-react";
 
 import {
   runSimulation,
   uploadCSV,
   startLiveSession,
-  getLiveSessionStatus,
+  ingestMetric,
   getLiveAnalysis,
-  stopLiveSession,
   getCurrentApiBaseUrl,
 } from "../services/api";
 
@@ -74,12 +71,14 @@ const liveMetrics = [
   },
 ];
 
+// Infer active data source from route URL
 function getSourceFromPath(pathname) {
   if (pathname.endsWith("/live-api")) return "api";
   if (pathname.endsWith("/upload-dataset")) return "csv";
   return "simulation";
 }
 
+// Load persisted Settings from localStorage
 function getSavedSettings() {
   try {
     const savedSettings = JSON.parse(
@@ -133,22 +132,66 @@ export default function NewAnalysis() {
   const [fieldErrors, setFieldErrors] =
     useState({});
 
-  const [
-    liveSessionActive,
-    setLiveSessionActive,
-  ] = useState(false);
+  const [copied, setCopied] =
+    useState(false);
+
+  const [liveConsoleMode, setLiveConsoleMode] =
+    useState("guided");
+
+  const [liveGuidedForm, setLiveGuidedForm] =
+    useState({
+      before: {
+        clicks: "1000",
+        conversion_rate: "0.05",
+        latency: "250",
+        error_rate: "0.02",
+      },
+      after: {
+        clicks: "1150",
+        conversion_rate: "0.058",
+        latency: "220",
+        error_rate: "0.015",
+      },
+    });
+
+  const [liveJsonInput, setLiveJsonInput] =
+    useState(
+      JSON.stringify(
+        [
+          { metric_name: "clicks", value: 1000, version: "before" },
+          { metric_name: "conversion_rate", value: 0.05, version: "before" },
+          { metric_name: "latency", value: 250, version: "before" },
+          { metric_name: "error_rate", value: 0.02, version: "before" },
+          { metric_name: "clicks", value: 1150, version: "after" },
+          { metric_name: "conversion_rate", value: 0.058, version: "after" },
+          { metric_name: "latency", value: 220, version: "after" },
+          { metric_name: "error_rate", value: 0.015, version: "after" },
+        ],
+        null,
+        2
+      )
+    );
+
+  const [liveSubmitting, setLiveSubmitting] =
+    useState(false);
+
+  const [liveSubmitProgress, setLiveSubmitProgress] =
+    useState("");
+
+  const [liveSignalsSent, setLiveSignalsSent] =
+    useState(0);
+
+  const [liveConsoleError, setLiveConsoleError] =
+    useState("");
+
+  const [lastAnalysisId, setLastAnalysisId] =
+    useState(null);
+
+  const [liveSessionActive, setLiveSessionActive] =
+    useState(false);
 
   const [liveSession, setLiveSession] =
     useState(null);
-
-  const [startingLive, setStartingLive] =
-    useState(false);
-
-  const [stoppingLive, setStoppingLive] =
-    useState(false);
-
-  const [copied, setCopied] =
-    useState(false);
 
   const [settings, setSettings] =
     useState(getSavedSettings);
@@ -177,71 +220,14 @@ export default function NewAnalysis() {
 
   useEffect(() => {
     function refreshSettings() {
-      setSettings(
-        getSavedSettings()
-      );
+      setSettings(getSavedSettings());
     }
 
-    window.addEventListener(
-      "focus",
-      refreshSettings
-    );
-
+    window.addEventListener("focus", refreshSettings);
     return () => {
-      window.removeEventListener(
-        "focus",
-        refreshSettings
-      );
+      window.removeEventListener("focus", refreshSettings);
     };
   }, []);
-
-  useEffect(() => {
-    if (
-      source !== "api" ||
-      !liveSessionActive
-    ) {
-      return;
-    }
-
-    const interval = setInterval(
-      async () => {
-        try {
-          const response =
-            await getLiveSessionStatus();
-
-          const session =
-            response.session || null;
-
-          setLiveSession(session);
-          setError("");
-
-          if (
-            session?.ready &&
-            !analysisCompletedRef.current
-          ) {
-            analysisCompletedRef.current =
-              true;
-
-            await finishLiveAnalysis();
-          }
-        } catch (err) {
-          setError(
-            err.message ||
-            "Could not update the Live API session."
-          );
-        }
-      },
-      pollingInterval
-    );
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [
-    source,
-    liveSessionActive,
-    pollingInterval,
-  ]);
 
   function getValidationErrors() {
     const errors = {};
@@ -412,105 +398,132 @@ export default function NewAnalysis() {
     };
   }
 
-  async function handleStartLiveSession() {
-    if (!validateChangeDetails()) {
-      return;
-    }
 
-    try {
-      setStartingLive(true);
-      setError("");
-      setSuccessMessage("");
 
-      setSettings(
-        getSavedSettings()
-      );
+  function handleLiveGuidedChange(version, key, value) {
+    setLiveGuidedForm((prev) => ({
+      ...prev,
+      [version]: {
+        ...prev[version],
+        [key]: value,
+      },
+    }));
+  }
 
-      analysisCompletedRef.current =
-        false;
+  async function handleRunLiveAnalysis(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    setLiveConsoleError("");
+    setError("");
 
-      const response =
-        await startLiveSession(
-          getAnalysisContext()
+    let signals = [];
+    if (liveConsoleMode === "guided") {
+      for (const ver of ["before", "after"]) {
+        for (const m of liveMetrics) {
+          const val = liveGuidedForm[ver][m.key];
+          if (
+            val === "" ||
+            val === null ||
+            val === undefined ||
+            isNaN(Number(val))
+          ) {
+            const capVer =
+              ver.charAt(0).toUpperCase() + ver.slice(1);
+            setLiveConsoleError(
+              `Enter a valid numeric value for ${capVer} → ${m.label}.`
+            );
+            return;
+          }
+        }
+      }
+
+      for (const m of liveMetrics) {
+        signals.push({
+          metric_name: m.key,
+          value: Number(liveGuidedForm.before[m.key]),
+          version: "before",
+        });
+        signals.push({
+          metric_name: m.key,
+          value: Number(liveGuidedForm.after[m.key]),
+          version: "after",
+        });
+      }
+    } else {
+      let parsed;
+      try {
+        parsed = JSON.parse(liveJsonInput);
+      } catch (err) {
+        setLiveConsoleError(
+          `Invalid JSON syntax: ${err.message}`
         );
-
-      setLiveSession(
-        response.session || null
-      );
-
-      setLiveSessionActive(true);
-    } catch (err) {
-      setError(
-        err.message ||
-        "Could not start the Live API session."
-      );
-    } finally {
-      setStartingLive(false);
-    }
-  }
-
-  async function handleStopLiveSession() {
-    try {
-      setStoppingLive(true);
-      setError("");
-
-      const response =
-        await stopLiveSession();
-
-      setLiveSession(
-        response.session || null
-      );
-
-      setLiveSessionActive(false);
-
-      analysisCompletedRef.current =
-        false;
-    } catch (err) {
-      setError(
-        err.message ||
-        "Could not stop the Live API session."
-      );
-    } finally {
-      setStoppingLive(false);
-    }
-  }
-
-  async function finishLiveAnalysis() {
-    try {
-      setRunning(true);
-      setError("");
-
-      const result =
-        await getLiveAnalysis();
-
-      if (!result.ready) {
-        analysisCompletedRef.current =
-          false;
-
         return;
       }
 
-      saveCompletedResult(
-        result,
-        "api"
-      );
-
-      try {
-        await stopLiveSession();
-      } catch {
-        // Analysis is already complete.
+      if (!Array.isArray(parsed)) {
+        setLiveConsoleError(
+          "JSON payload must be an array of 8 metric signal objects."
+        );
+        return;
       }
 
-      setLiveSessionActive(false);
-    } catch (err) {
-      analysisCompletedRef.current =
-        false;
+      if (parsed.length < 8) {
+        setLiveConsoleError(
+          `The backend requires all 8 metric signals (4 metrics x 2 versions). You provided ${parsed.length} signals.`
+        );
+        return;
+      }
 
-      setError(
+      signals = parsed;
+    }
+
+    try {
+      setLiveSubmitting(true);
+      setRunning(true);
+      setLiveSignalsSent(0);
+      setLiveSubmitProgress("Starting Live API Session...");
+
+      // Start live session using change context
+      await startLiveSession(getAnalysisContext());
+      setLiveSessionActive(true);
+
+      // Ingest signals sequentially
+      for (let i = 0; i < signals.length; i++) {
+        setLiveSubmitProgress(
+          `Sending signal ${i + 1} of ${signals.length}...`
+        );
+        setLiveSignalsSent(i + 1);
+
+        const res = await ingestMetric(signals[i]);
+        if (res.status !== "success") {
+          throw new Error(
+            res.error ||
+            res.detail ||
+            `Failed to ingest signal ${i + 1}`
+          );
+        }
+      }
+
+      setLiveSubmitProgress("Analyzing deployment signals...");
+      const result = await getLiveAnalysis();
+
+      if (result.status === "success" && result.analysis_id) {
+        setLiveSubmitProgress("Analysis complete! Navigating to Decision Room...");
+        navigate(`/decision-room/${result.analysis_id}`);
+      } else if (result.analysis_id) {
+        navigate(`/decision-room/${result.analysis_id}`);
+      } else {
+        throw new Error(
+          result.message ||
+          "Live API analysis failed or was not ready."
+        );
+      }
+    } catch (err) {
+      console.error("Live API execution error:", err);
+      setLiveConsoleError(
         err.message ||
-        "Could not complete the Live API analysis."
+        "Could not complete Live API analysis."
       );
-    } finally {
+      setLiveSubmitting(false);
       setRunning(false);
     }
   }
@@ -543,10 +556,7 @@ export default function NewAnalysis() {
     );
 
     if (source === "api") {
-      if (!liveSessionActive) {
-        await handleStartLiveSession();
-      }
-
+      await handleRunLiveAnalysis();
       return;
     }
 
@@ -613,63 +623,11 @@ export default function NewAnalysis() {
     const currentSettings =
       getSavedSettings();
 
-    const completeResult = {
-      ...result,
-
-      id: crypto.randomUUID(),
-
-      created_at:
-        new Date().toISOString(),
-
-      context: {
-        analysis_name:
-          analysisName.trim(),
-
-        before_version:
-          beforeVersion.trim(),
-
-        after_version:
-          afterVersion.trim(),
-
-        change_description:
-          changeDescription.trim(),
-
-        data_source: dataSource,
-
-        file_name:
-          dataSource === "csv"
-            ? csvFile?.name
-            : null,
-      },
-    };
-
-    localStorage.setItem(
-      "secondorder_result",
-      JSON.stringify(
-        completeResult
-      )
-    );
-
-    if (
-      currentSettings.autoSaveHistory
-    ) {
-      saveToHistory(
-        completeResult
-      );
-    }
+    setLastAnalysisId(result.analysis_id);
 
     if (
       currentSettings.autoOpenDecisionRoom
     ) {
-      console.log("RESULT OBJECT:", result);
-      console.log("RESULT OBJECT:", JSON.stringify(result, null, 2));
-      console.log("analysis_id:", result?.analysis_id);
-
-      navigate(`/decision-room/${result?.analysis_id}`);
-      localStorage.setItem(
-        "last_analysis_id",
-        result.analysis_id
-      );
       navigate(`/decision-room/${result.analysis_id}`);
 
       return;
@@ -677,48 +635,11 @@ export default function NewAnalysis() {
 
     const historyText =
       currentSettings.autoSaveHistory
-        ? " It was saved to Decision History."
+        ? " It was saved to Deployments history."
         : "";
 
     setSuccessMessage(
       `Analysis complete.${historyText} Open the Decision Room when you are ready.`
-    );
-  }
-
-  function saveToHistory(
-    completeResult
-  ) {
-    let existingHistory = [];
-
-    try {
-      existingHistory =
-        JSON.parse(
-          localStorage.getItem(
-            "secondorder_history"
-          ) || "[]"
-        );
-
-      if (
-        !Array.isArray(
-          existingHistory
-        )
-      ) {
-        existingHistory = [];
-      }
-    } catch {
-      existingHistory = [];
-    }
-
-    const updatedHistory = [
-      completeResult,
-      ...existingHistory,
-    ];
-
-    localStorage.setItem(
-      "secondorder_history",
-      JSON.stringify(
-        updatedHistory
-      )
     );
   }
 
@@ -839,176 +760,141 @@ export default function NewAnalysis() {
                       <strong>No API key is required by the current ingestion endpoint.</strong>
                     </div>
 
-                    {!liveSessionActive ? (
-                      <div className="live-api-start-panel">
-                        <div className="live-api-start-icon">
-                          <Radio size={22} />
+                    {!liveSessionActive && !liveSubmitting ? (
+                      <div className="new-analysis-live-console">
+                        <div className="live-console-header">
+                          <div className="console-tabs">
+                            <button
+                              type="button"
+                              className={`console-tab ${liveConsoleMode === "guided" ? "active" : ""}`}
+                              onClick={() => setLiveConsoleMode("guided")}
+                              disabled={liveSubmitting}
+                            >
+                              Guided Form
+                            </button>
+                            <button
+                              type="button"
+                              className={`console-tab ${liveConsoleMode === "json" ? "active" : ""}`}
+                              onClick={() => setLiveConsoleMode("json")}
+                              disabled={liveSubmitting}
+                            >
+                              Advanced JSON
+                            </button>
+                          </div>
                         </div>
 
-                        <strong>
-                          Ready to receive
-                          signals
-                        </strong>
+                        {liveConsoleError && (
+                          <div className="live-api-error-banner">
+                            <span>{liveConsoleError}</span>
+                          </div>
+                        )}
 
-                        <p>
-                          Complete the change
-                          details, then start a
-                          session. SECONDORDER
-                          will clear old data and
-                          listen for new API
-                          metrics.
-                        </p>
+                        {liveConsoleMode === "guided" ? (
+                          <div className="live-guided-container">
+                            <div className="guided-columns-grid">
+                              {/* BEFORE COLUMN */}
+                              <div className="guided-version-column">
+                                <div className="version-header before">
+                                  <span className="version-tag">BEFORE</span>
+                                  <h4>Pre-Deployment Baseline</h4>
+                                </div>
+                                <div className="guided-fields-list">
+                                  {liveMetrics.map((m) => (
+                                    <div key={m.key} className="guided-field-item">
+                                      <label>{m.label}</label>
+                                      <input
+                                        type="number"
+                                        step="any"
+                                        value={liveGuidedForm.before[m.key]}
+                                        onChange={(e) =>
+                                          handleLiveGuidedChange("before", m.key, e.target.value)
+                                        }
+                                        placeholder="0.0"
+                                        disabled={liveSubmitting}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
 
-                        <button
-                          type="button"
-                          className="live-start-button"
-                          onClick={
-                            handleStartLiveSession
-                          }
-                          disabled={
-                            startingLive
-                          }
-                        >
-                          <Radio size={16} />
-
-                          {startingLive
-                            ? "Starting Session..."
-                            : "Start Live Session"}
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="live-progress-card">
-                          <div className="live-progress-top">
-                            <div>
-                              <span>
-                                COLLECTION
-                                PROGRESS
-                              </span>
-
-                              <strong>
-                                {
-                                  progressPercentage
-                                }
-                                %
-                              </strong>
-                            </div>
-
-                            <div>
-                              <span>
-                                SIGNALS RECEIVED
-                              </span>
-
-                              <strong>
-                                {
-                                  signalsReceived
-                                }
-                              </strong>
+                              {/* AFTER COLUMN */}
+                              <div className="guided-version-column">
+                                <div className="version-header after">
+                                  <span className="version-tag">AFTER</span>
+                                  <h4>Post-Deployment Observed</h4>
+                                </div>
+                                <div className="guided-fields-list">
+                                  {liveMetrics.map((m) => (
+                                    <div key={m.key} className="guided-field-item">
+                                      <label>{m.label}</label>
+                                      <input
+                                        type="number"
+                                        step="any"
+                                        value={liveGuidedForm.after[m.key]}
+                                        onChange={(e) =>
+                                          handleLiveGuidedChange("after", m.key, e.target.value)
+                                        }
+                                        placeholder="0.0"
+                                        disabled={liveSubmitting}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          <div className="live-progress-track">
-                            <span
-                              style={{
-                                width: `${progressPercentage}%`,
-                              }}
+                        ) : (
+                          <div className="live-json-container">
+                            <div className="json-editor-header">
+                              <span>JSON Array (8 Metric Signals)</span>
+                            </div>
+                            <textarea
+                              className="json-textarea"
+                              rows={10}
+                              value={liveJsonInput}
+                              onChange={(e) => setLiveJsonInput(e.target.value)}
+                              disabled={liveSubmitting}
                             />
                           </div>
+                        )}
 
-                          <p>
-                            Waiting for before
-                            and after data for
-                            all four metrics.
+                        <div className="live-console-footer">
+                          <p className="live-console-hint">
+                            Submitting generates all 8 metric signals and evaluates decision intelligence.
                           </p>
-                        </div>
-
-                        <div className="live-metric-status-grid">
-                          {liveMetrics.map(
-                            (metric) => {
-                              const status =
-                                liveSession
-                                  ?.metrics?.[
-                                metric.key
-                                ] || {};
-
-                              return (
-                                <div
-                                  className="live-metric-status"
-                                  key={
-                                    metric.key
-                                  }
-                                >
-                                  <div className="live-metric-name">
-                                    <Activity
-                                      size={14}
-                                    />
-
-                                    <strong>
-                                      {
-                                        metric.label
-                                      }
-                                    </strong>
-                                  </div>
-
-                                  <div className="live-version-status">
-                                    <LiveRequirement
-                                      label="Before"
-                                      complete={
-                                        status.before
-                                      }
-                                    />
-
-                                    <LiveRequirement
-                                      label="After"
-                                      complete={
-                                        status.after
-                                      }
-                                    />
-                                  </div>
-
-                                  <span className="live-sample-count">
-                                    {status.samples ||
-                                      0}{" "}
-                                    samples
-                                  </span>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-
-                        <div className="live-session-footer">
-                          <div>
-                            <span className="live-pulse-dot" />
-
-                            Polling for new
-                            signals every{" "}
-                            {pollingSeconds}{" "}
-                            {pollingSeconds === 1
-                              ? "second"
-                              : "seconds"}
-                          </div>
-
                           <button
                             type="button"
-                            onClick={
-                              handleStopLiveSession
-                            }
-                            disabled={
-                              stoppingLive
-                            }
+                            className="live-start-button"
+                            onClick={handleRunLiveAnalysis}
+                            disabled={liveSubmitting}
                           >
-                            <StopCircle
-                              size={14}
-                            />
-
-                            {stoppingLive
-                              ? "Stopping..."
-                              : "Stop Session"}
+                            <Radio size={16} />
+                            {liveSubmitting ? "Running Ingestion..." : "Run Live Analysis"}
                           </button>
                         </div>
-                      </>
-                    )}
+                      </div>
+                    ) : liveSubmitting ? (
+                      <div className="live-progress-card">
+                        <div className="live-progress-top">
+                          <div>
+                            <span>INGESTION IN PROGRESS</span>
+                            <strong>{liveSubmitProgress}</strong>
+                          </div>
+                          <div>
+                            <span>SIGNALS SENT</span>
+                            <strong>{liveSignalsSent} / 8</strong>
+                          </div>
+                        </div>
+                        <div className="live-progress-track">
+                          <span
+                            style={{
+                              width: `${Math.round((liveSignalsSent / 8) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <p>Transmitting signals and calculating decision score...</p>
+                      </div>
+                    ) : null}
                   </div>
                 )}
 
@@ -1355,9 +1241,9 @@ export default function NewAnalysis() {
                   </span>
 
                   <strong>
-                    {liveSessionActive
-                      ? "Listening"
-                      : "Not started"}
+                    {liveSubmitting
+                      ? "Ingesting signals..."
+                      : "Ready"}
                   </strong>
                 </div>
 
@@ -1367,17 +1253,17 @@ export default function NewAnalysis() {
                   </span>
 
                   <strong>
-                    {progressPercentage}%
+                    {Math.round((liveSignalsSent / 8) * 100)}%
                   </strong>
                 </div>
 
                 <div className="plan-item">
                   <span>
-                    Polling interval
+                    Signals analyzed
                   </span>
 
                   <strong>
-                    {pollingSeconds}s
+                    {liveSignalsSent} / 8 signals
                   </strong>
                 </div>
               </>
@@ -1403,7 +1289,7 @@ export default function NewAnalysis() {
               </span>
 
               <strong>
-                4 deployment signals
+                8 metric signals
               </strong>
             </div>
 
@@ -1431,7 +1317,7 @@ export default function NewAnalysis() {
 
               <strong>
                 {source === "api"
-                  ? "Live collection"
+                  ? "Instant ingestion"
                   : "Under 30 seconds"}
               </strong>
             </div>
@@ -1476,53 +1362,39 @@ export default function NewAnalysis() {
                   successMessage
                     ? () =>
                       navigate(
-                        `/decision-room/${localStorage.getItem("last_analysis_id")}`
+                        `/decision-room/${lastAnalysisId}`
                       )
                     : handleRunAnalysis
                 }
                 disabled={
                   running ||
-                  startingLive ||
-                  (
-                    source === "api" &&
-                    liveSessionActive
-                  )
+                  liveSubmitting
                 }
               >
                 {successMessage
                   ? "Open Decision Room"
-                  : running
+                  : running || liveSubmitting
                     ? source === "csv"
                       ? "Uploading & Analyzing..."
                       : source === "api"
-                        ? "Completing Live Analysis..."
+                        ? "Transmitting Signals..."
                         : "Running ML Analysis..."
                     : source === "api"
-                      ? liveSessionActive
-                        ? "Listening for Signals..."
-                        : "Analyze Deployment"
+                      ? "Run Live Analysis"
                       : "Analyze Deployment"}
 
-                {!running &&
-                  !(
-                    source === "api" &&
-                    liveSessionActive
-                  ) && (
-                    <ArrowRight
-                      size={17}
-                    />
-                  )}
+                {!running && !liveSubmitting && (
+                  <ArrowRight
+                    size={17}
+                  />
+                )}
               </button>
 
               <p className="run-note">
                 {source === "api"
-                  ? liveSessionActive
-                    ? settings.autoOpenDecisionRoom
-                      ? "The Decision Room will open automatically when all required signals are received."
-                      : "The completed result will remain here until you choose to open the Decision Room."
-                    : `Start a session to begin receiving metrics through the ingestion API. Polling interval: ${pollingSeconds}s.`
+                  ? "Submit Before & After deployment signals directly to calculate decision intelligence."
                   : settings.autoSaveHistory
-                    ? "Estimated runtime: under 30 seconds. Results are automatically saved to Decision History."
+                    ? "Estimated runtime: under 30 seconds. Results are automatically saved to Deployments history."
                     : "Estimated runtime: under 30 seconds. Automatic history saving is disabled."}
               </p>
             </div>

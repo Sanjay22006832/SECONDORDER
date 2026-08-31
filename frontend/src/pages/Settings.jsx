@@ -9,6 +9,8 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { getHistory, clearAllHistory } from "../services/api";
+
 const DEFAULT_SETTINGS = {
   apiBaseUrl: "http://127.0.0.1:8000",
   pollingInterval: 2000,
@@ -23,6 +25,7 @@ export default function Settings() {
 
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState("");
+  const [historyCount, setHistoryCount] = useState(0);
 
   useEffect(() => {
     try {
@@ -41,8 +44,23 @@ export default function Settings() {
     } catch {
       setSettings(DEFAULT_SETTINGS);
     }
+
+    fetchHistoryCount();
   }, []);
 
+  // Fetch count of saved deployments in SQLite backend
+  async function fetchHistoryCount() {
+    try {
+      const response = await getHistory();
+      if (response.status === "success") {
+        setHistoryCount(response.count ?? response.history?.length ?? 0);
+      }
+    } catch {
+      setHistoryCount(0);
+    }
+  }
+
+  // Update setting field in component state
   function updateSetting(name, value) {
     setSettings((current) => ({
       ...current,
@@ -53,6 +71,7 @@ export default function Settings() {
     setMessage("");
   }
 
+  // Persist current settings to localStorage
   function saveSettings() {
     localStorage.setItem(
       "secondorder_settings",
@@ -69,6 +88,7 @@ export default function Settings() {
     }, 2000);
   }
 
+  // Restore default settings
   function resetSettings() {
     setSettings(DEFAULT_SETTINGS);
 
@@ -84,25 +104,31 @@ export default function Settings() {
     setSaved(false);
   }
 
-  function clearHistory() {
+  // Clear all saved deployment history from SQLite backend
+  async function clearHistory() {
     const confirmed = window.confirm(
-      "Clear all saved Decision History? This cannot be undone."
+      "Clear all saved deployment history? This cannot be undone."
     );
 
     if (!confirmed) {
       return;
     }
 
-    localStorage.removeItem(
-      "secondorder_history"
-    );
+    try {
+      await clearAllHistory();
+    } catch (err) {
+      console.error("Failed to clear deployment history:", err);
+    }
+
+    setHistoryCount(0);
 
     setMessage(
-      "Decision History has been cleared."
+      "Deployment history has been cleared."
     );
   }
 
-  function resetAllData() {
+  // Reset workspace settings and clear deployment history
+  async function resetAllData() {
     const confirmed = window.confirm(
       "Reset all SECONDORDER local data? This removes analysis results, history, and saved settings."
     );
@@ -111,19 +137,18 @@ export default function Settings() {
       return;
     }
 
-    localStorage.removeItem(
-      "secondorder_result"
-    );
-
-    localStorage.removeItem(
-      "secondorder_history"
-    );
+    try {
+      await clearAllHistory();
+    } catch (err) {
+      console.error("Failed to clear SQLite history:", err);
+    }
 
     localStorage.removeItem(
       "secondorder_settings"
     );
 
     setSettings(DEFAULT_SETTINGS);
+    setHistoryCount(0);
 
     setMessage(
       "All SECONDORDER local data has been reset."
@@ -276,8 +301,8 @@ export default function Settings() {
               />
 
               <SettingsToggle
-                title="Auto-save Decision History"
-                description="Save completed analyses to Decision History automatically."
+                title="Save Deployments Automatically"
+                description="Save completed analyses to Deployments automatically."
                 checked={
                   settings.autoSaveHistory
                 }
@@ -298,29 +323,27 @@ export default function Settings() {
               </div>
 
               <span className="eyebrow">
-                LOCAL STORAGE
+                DATABASE STORAGE
               </span>
 
               <h3>Workspace data</h3>
 
               <p>
-                SECONDORDER currently stores analysis
-                context, results, history, and preferences
-                in this browser.
+                SECONDORDER persists deployment records centrally in SQLite with API preferences saved in browser storage.
               </p>
 
               <div className="settings-storage-row">
-                <span>Saved analyses</span>
+                <span>Saved deployments</span>
 
                 <strong>
-                  {getHistoryCount()}
+                  {historyCount}
                 </strong>
               </div>
 
               <div className="settings-storage-row">
                 <span>Storage mode</span>
 
-                <strong>Browser local</strong>
+                <strong>SQLite DB</strong>
               </div>
             </article>
 
@@ -344,7 +367,7 @@ export default function Settings() {
                 onClick={clearHistory}
               >
                 <Trash2 size={15} />
-                Clear Decision History
+                Clear Deployment History
               </button>
 
               <button
@@ -422,19 +445,4 @@ function SettingsToggle({
     </div>
   );
 }
-
-function getHistoryCount() {
-  try {
-    const history = JSON.parse(
-      localStorage.getItem(
-        "secondorder_history"
-      ) || "[]"
-    );
-
-    return Array.isArray(history)
-      ? history.length
-      : 0;
-  } catch {
-    return 0;
-  }
-}
+

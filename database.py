@@ -10,15 +10,19 @@ DB_NAME = "history.db"
 # ==========================================
 
 
+# Establish database connection
+# Establish database connection with timeout and WAL mode
 def get_connection():
-    return sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME, timeout=20.0)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+    except Exception:
+        pass
+    return conn
 
 
-# ==========================================
-# CREATE TABLE
-# ==========================================
-
-
+# Initialize SQLite table schema
 def initialize_database():
 
     conn = get_connection()
@@ -50,11 +54,7 @@ def initialize_database():
     conn.close()
 
 
-# ==========================================
-# SAVE ANALYSIS
-# ==========================================
-
-
+# Save completed analysis result and metadata to SQLite
 def save_analysis(context, analysis):
 
     conn = get_connection()
@@ -96,11 +96,7 @@ def save_analysis(context, analysis):
     return analysis_id
 
 
-# ==========================================
-# GET HISTORY
-# ==========================================
-
-
+# Fetch all deployment history records ordered by newest first
 def get_history():
 
     conn = get_connection()
@@ -123,19 +119,19 @@ def get_history():
     for row in rows:
 
         item = dict(row)
+        analysis_raw = item.pop("analysis_json", None)
 
-        item["analysis"] = json.loads(item.pop("analysis_json"))
+        try:
+            item["analysis"] = json.loads(analysis_raw) if analysis_raw else {}
+        except Exception:
+            item["analysis"] = {}
 
         history.append(item)
 
     return history
 
 
-# ==========================================
-# DELETE HISTORY
-# ==========================================
-
-
+# Delete single deployment record by ID
 def delete_analysis(record_id):
 
     conn = get_connection()
@@ -149,11 +145,7 @@ def delete_analysis(record_id):
     conn.close()
 
 
-# ==========================================
-# CLEAR HISTORY
-# ==========================================
-
-
+# Clear all saved deployment records
 def clear_history():
 
     conn = get_connection()

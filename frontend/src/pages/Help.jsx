@@ -34,7 +34,7 @@ const helpSections = [
   },
   {
     icon: Database,
-    title: "Decision History",
+    title: "Deployments",
     text: "Search saved analyses and reopen the exact evidence behind earlier decisions.",
   },
   {

@@ -1,15 +1,9 @@
 import { useState } from "react";
-
-import {
-  NavLink,
-  useNavigate,
-} from "react-router-dom";
-
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Rocket,
   PlusCircle,
-  History,
   BrainCircuit,
   Plug,
   Settings,
@@ -18,7 +12,7 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 
-const mainItems = [
+const productItems = [
   {
     icon: LayoutDashboard,
     label: "Command Center",
@@ -28,16 +22,6 @@ const mainItems = [
     icon: Rocket,
     label: "Deployments",
     path: "/deployments",
-  },
-  {
-    icon: PlusCircle,
-    label: "New Analysis",
-    path: "/new-analysis",
-  },
-  {
-    icon: History,
-    label: "Decision History",
-    path: "/history",
   },
   {
     icon: BrainCircuit,
@@ -59,68 +43,46 @@ const workspaceItems = [
   },
 ];
 
-function NavItem({
-  icon: Icon,
-  label,
-  path,
-  onNavigate,
-}) {
+function NavItem({ icon: Icon, label, path, isCollapsed }) {
   return (
     <NavLink
       to={path}
       className={({ isActive }) =>
-        `nav-item ${
-          isActive ? "active" : ""
-        }`
+        `nav-item ${isActive ? "active" : ""}`
       }
-      onClick={onNavigate}
+      title={isCollapsed ? label : undefined}
     >
       <Icon size={18} />
-      <span>{label}</span>
+      {!isCollapsed && <span>{label}</span>}
     </NavLink>
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isCollapsed: propIsCollapsed, onToggle }) {
   const navigate = useNavigate();
+  const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
 
-  const [isOpen, setIsOpen] =
-    useState(false);
+  const isCollapsed = propIsCollapsed !== undefined ? propIsCollapsed : internalIsCollapsed;
 
-  function closeSidebar() {
-    setIsOpen(false);
-  }
-
-  function openSidebar() {
-    setIsOpen(true);
+  function toggleSidebar() {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setInternalIsCollapsed((prev) => !prev);
+    }
   }
 
   function goHome() {
-    closeSidebar();
     navigate("/");
   }
 
   function openHelp() {
-    closeSidebar();
     navigate("/help");
   }
 
-  if (!isOpen) {
-    return (
-      <button
-        type="button"
-        className="sidebar-reopen-button"
-        onClick={openSidebar}
-        aria-label="Open sidebar"
-        title="Open sidebar"
-      >
-        <PanelLeftOpen size={19} />
-      </button>
-    );
-  }
-
   return (
-    <aside className="sidebar sidebar-overlay">
+    <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
+      {/* BRAND HEADER */}
       <div className="sidebar-header">
         <button
           type="button"
@@ -128,69 +90,67 @@ export default function Sidebar() {
           onClick={goHome}
           title="Return to SECONDORDER home"
         >
-          <div className="brand-mark">
-            SO
-          </div>
+          <div className="brand-mark">SO</div>
 
-          <div className="brand-copy">
-            <h1>SECONDORDER</h1>
-
-            <span>
-              Decision Intelligence
-            </span>
-          </div>
+          {!isCollapsed && (
+            <div className="brand-copy">
+              <h1>SECONDORDER</h1>
+              <span>Decision Intelligence</span>
+            </div>
+          )}
         </button>
 
         <button
           type="button"
           className="sidebar-toggle"
-          onClick={closeSidebar}
-          aria-label="Close sidebar"
-          title="Close sidebar"
+          onClick={toggleSidebar}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <PanelLeftClose size={17} />
+          {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={17} />}
         </button>
       </div>
 
-      <nav className="sidebar-nav">
-        <p className="nav-heading">
-          PRODUCT
-        </p>
+      {/* PRIMARY ACTION */}
+      <div className="sidebar-primary-container">
+        <NavLink
+          to="/new-analysis"
+          className={({ isActive }) =>
+            `sidebar-primary-action ${isActive ? "active" : ""}`
+          }
+          title={isCollapsed ? "New Analysis" : undefined}
+        >
+          <PlusCircle size={18} />
+          {!isCollapsed && <span>New Analysis</span>}
+        </NavLink>
+      </div>
 
-        {mainItems.map((item) => (
-          <NavItem
-            key={item.label}
-            {...item}
-            onNavigate={closeSidebar}
-          />
+      {/* NAVIGATION */}
+      <nav className="sidebar-nav">
+        {!isCollapsed && <p className="nav-heading">PRODUCT</p>}
+
+        {productItems.map((item) => (
+          <NavItem key={item.label} {...item} isCollapsed={isCollapsed} />
         ))}
 
-        <p className="nav-heading workspace-heading">
-          WORKSPACE
-        </p>
+        {!isCollapsed && <p className="nav-heading workspace-heading">WORKSPACE</p>}
 
         {workspaceItems.map((item) => (
-          <NavItem
-            key={item.label}
-            {...item}
-            onNavigate={closeSidebar}
-          />
+          <NavItem key={item.label} {...item} isCollapsed={isCollapsed} />
         ))}
       </nav>
 
+      {/* UTILITY FOOTER */}
       <div className="sidebar-footer">
         <button
           type="button"
           className="help-button"
           onClick={openHelp}
+          title={isCollapsed ? "Help & Documentation" : undefined}
         >
           <CircleHelp size={18} />
-
-          <span>
-            Help & Documentation
-          </span>
+          {!isCollapsed && <span>Help & Documentation</span>}
         </button>
-
       </div>
     </aside>
   );

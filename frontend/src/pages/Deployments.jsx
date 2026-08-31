@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -13,9 +14,11 @@ import {
   Layers3,
   Plus,
   Search,
+  Trash2,
   TriangleAlert,
-  X,
 } from "lucide-react";
+
+import { getHistory, deleteAnalysis, clearAllHistory } from "../services/api";
 
 export default function Deployments() {
   const navigate = useNavigate();
@@ -26,21 +29,27 @@ export default function Deployments() {
   const [activeFilter, setActiveFilter] =
     useState("ALL");
 
-  const history = useMemo(() => {
-    try {
-      const savedHistory = JSON.parse(
-        localStorage.getItem(
-          "secondorder_history"
-        ) || "[]"
-      );
+  const [sourceFilter, setSourceFilter] =
+    useState("ALL");
 
-      return Array.isArray(savedHistory)
-        ? savedHistory
-        : [];
-    } catch {
-      return [];
-    }
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    loadHistory();
   }, []);
+
+  // Fetch saved deployment history from SQLite backend
+  async function loadHistory() {
+    try {
+      const data = await getHistory();
+
+      if (data.status === "success") {
+        setHistory(data.history || []);
+      }
+    } catch (error) {
+      console.error("Failed to load deployment history:", error);
+    }
+  }
 
   const safeCount = history.filter(
     (item) =>
@@ -71,7 +80,7 @@ export default function Deployments() {
 
     return history.filter((item) => {
       const context =
-        item.context || {};
+        item.context || item || {};
 
       const analysis =
         item.analysis || {};
@@ -79,6 +88,11 @@ export default function Deployments() {
       const decision =
         analysis.prediction ||
         "UNKNOWN";
+
+      const source =
+        context.data_source ||
+        item.data_source ||
+        "simulation";
 
       const searchableText = [
         context.analysis_name,
@@ -101,39 +115,96 @@ export default function Deployments() {
         activeFilter === "ALL" ||
         (activeFilter === "HIGH RISK"
           ? [
-              "RISKY CHANGE",
-              "ROLLBACK",
-            ].includes(decision)
+            "RISKY CHANGE",
+            "ROLLBACK",
+          ].includes(decision)
           : decision === activeFilter);
+
+      const matchesSource =
+        sourceFilter === "ALL" ||
+        source === sourceFilter;
 
       return (
         matchesSearch &&
-        matchesFilter
+        matchesFilter &&
+        matchesSource
       );
     });
   }, [
     history,
     search,
     activeFilter,
+    sourceFilter,
   ]);
 
+  // Open Decision Room for selected deployment
   function openDeployment(item) {
-    localStorage.setItem(
-      "secondorder_result",
-      JSON.stringify(item)
-    );
-
-    navigate("/decision-room");
+    navigate(`/decision-room/${item.id}`);
   }
 
+  // Delete individual deployment record
+  async function handleDelete(event, item) {
+    event.stopPropagation();
+
+    const context = item.context || item || {};
+    const name = context.analysis_name || "this deployment";
+
+    const confirmed = window.confirm(
+      `Delete deployment "${name}"? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await deleteAnalysis(item.id);
+
+      if (response.status === "success") {
+        setHistory((prev) => prev.filter((h) => h.id !== item.id));
+      } else {
+        alert(`Failed to delete deployment: ${response.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Error deleting deployment:", err);
+      alert(`Failed to delete deployment: ${err.message}`);
+    }
+  }
+
+  // Clear all deployment history records
+  async function handleClearHistory() {
+    const confirmed = window.confirm(
+      "Clear all saved deployment history? This cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await clearAllHistory();
+
+      if (response.status === "success") {
+        setHistory([]);
+        setSearch("");
+        setActiveFilter("ALL");
+        setSourceFilter("ALL");
+      } else {
+        alert(`Failed to clear history: ${response.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Error clearing history:", err);
+      alert(`Failed to clear history: ${err.message}`);
+    }
+  }
+
+  // Reset search and filter selections
   function clearFilters() {
     setSearch("");
     setActiveFilter("ALL");
+    setSourceFilter("ALL");
   }
 
   const filtersActive =
     search.trim() ||
-    activeFilter !== "ALL";
+    activeFilter !== "ALL" ||
+    sourceFilter !== "ALL";
 
   return (
     <main className="product-main">
@@ -166,17 +237,88 @@ export default function Deployments() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() =>
-              navigate("/new-analysis")
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            {history.length > 0 && (
+              <button
+                type="button"
+                className="history-clear-button"
+                onClick={handleClearHistory}
+              >
+                <Trash2 size={15} />
+                Clear History
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() =>
+                navigate("/new-analysis")
+              }
+            >
+              <Plus size={16} />
+              New Analysis
+            </button>
+          </div>
+        </section>
+
+        <section className="deployments-toolbar-section">
+          <div className="deployments-search-bar">
+            <Search size={18} className="search-icon" />
+
+            <input
+              type="text"
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search name, version, change, risk..."
+            />
+          </div>
+
+          <select
+            className="deployments-source-select"
+            value={sourceFilter}
+            onChange={(event) =>
+              setSourceFilter(
+                event.target.value
+              )
             }
           >
-            <Plus size={16} />
-            New Analysis
-          </button>
+            <option value="ALL">
+              All sources
+            </option>
+
+            <option value="simulation">
+              Demo Simulation
+            </option>
+
+            <option value="api">
+              Live API
+            </option>
+
+            <option value="csv">
+              Uploaded CSV
+            </option>
+          </select>
         </section>
+
+        <div className="deployments-meta-bar">
+          <span>
+            Showing{" "}
+            <strong>
+              {deployments.length}
+            </strong>{" "}
+            of {history.length} deployments
+          </span>
+
+          <span>
+            Click a deployment to open
+            its decision evidence
+          </span>
+        </div>
 
         <section className="deployment-stat-grid">
           <DeploymentStat
@@ -249,46 +391,6 @@ export default function Deployments() {
 
               <h3>Analyzed changes</h3>
             </div>
-
-            <div className="deployment-toolbar">
-              <div className="deployment-search">
-                <Search size={15} />
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(event) =>
-                    setSearch(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search deployments..."
-                />
-
-                {search && (
-                  <button
-                    type="button"
-                    className="deployment-search-clear"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    aria-label="Clear search"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-
-              {filtersActive && (
-                <button
-                  type="button"
-                  className="deployment-clear-filters"
-                  onClick={clearFilters}
-                >
-                  Clear filters
-                </button>
-              )}
-            </div>
           </div>
 
           {deployments.length === 0 ? (
@@ -333,27 +435,12 @@ export default function Deployments() {
               )}
             </div>
           ) : (
-            <>
-              <div className="deployment-results-meta">
-                <span>
-                  Showing{" "}
-                  <strong>
-                    {deployments.length}
-                  </strong>{" "}
-                  of {history.length} deployments
-                </span>
-
-                <span>
-                  Click a deployment to open
-                  its decision evidence
-                </span>
-              </div>
-
-              <div className="deployment-list">
+            <div className="deployment-list">
                 {deployments.map(
                   (item, index) => {
+                    // Read deployment metadata from top-level SQLite record properties or context object
                     const context =
-                      item.context || {};
+                      item.context || item || {};
 
                     const analysis =
                       item.analysis || {};
@@ -367,7 +454,7 @@ export default function Deployments() {
                         Math.max(
                           Number(
                             analysis.confidence ||
-                              0
+                            0
                           ) * 100,
                           0
                         ),
@@ -401,9 +488,9 @@ export default function Deployments() {
                         ) => {
                           if (
                             event.key ===
-                              "Enter" ||
+                            "Enter" ||
                             event.key ===
-                              " "
+                            " "
                           ) {
                             openDeployment(
                               item
@@ -490,6 +577,21 @@ export default function Deployments() {
 
                         <button
                           type="button"
+                          className="history-delete-button"
+                          onClick={(event) =>
+                            handleDelete(
+                              event,
+                              item
+                            )
+                          }
+                          aria-label="Delete deployment"
+                          title="Delete deployment"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+
+                        <button
+                          type="button"
                           className="deployment-open-button"
                           onClick={(
                             event
@@ -511,7 +613,6 @@ export default function Deployments() {
                   }
                 )}
               </div>
-            </>
           )}
         </section>
       </div>
@@ -530,11 +631,10 @@ function DeploymentStat({
   return (
     <button
       type="button"
-      className={`deployment-stat-card deployment-stat-interactive ${tone} ${
-        active
-          ? "deployment-stat-active"
-          : ""
-      }`}
+      className={`deployment-stat-card deployment-stat-interactive ${tone} ${active
+        ? "deployment-stat-active"
+        : ""
+        }`}
       onClick={onClick}
     >
       <div>

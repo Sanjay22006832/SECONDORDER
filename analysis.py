@@ -22,20 +22,22 @@ MODEL_FILE = os.path.join(
 
 
 # ==================================================
-# LOAD TRAINED RANDOM FOREST ONCE
+# LAZY MODEL LOADING
 # ==================================================
 
-if not os.path.exists(MODEL_FILE):
-    raise FileNotFoundError(
-        "secondorder_model.pkl was not found. "
-        "Run: python train_model.py"
-    )
+_model_package_cache = None
 
-model_package = joblib.load(MODEL_FILE)
 
-model = model_package["model"]
-model_features = model_package["features"]
-class_names = model_package["class_names"]
+def get_model_package():
+    global _model_package_cache
+    if _model_package_cache is None:
+        if not os.path.exists(MODEL_FILE):
+            raise FileNotFoundError(
+                "secondorder_model.pkl was not found. "
+                "Run: python train_model.py"
+            )
+        _model_package_cache = joblib.load(MODEL_FILE)
+    return _model_package_cache
 
 
 # ==================================================
@@ -413,6 +415,11 @@ def analyze_data(
         # ==================================================
         # 11. CREATE RANDOM FOREST INPUT
         # ==================================================
+
+        model_package = get_model_package()
+        model = model_package["model"]
+        model_features = model_package["features"]
+        class_names = model_package["class_names"]
 
         feature_values = {
 
@@ -1209,20 +1216,17 @@ def waiting_result(
         "class_probabilities":
             {},
 
-        "model_info": {
-
-            "name":
-                model_package.get(
-                    "model_name",
-                    "Random Forest Classifier"
-                ),
-
-            "version":
-                model_package.get(
-                    "model_version",
-                    "1.0.0"
-                )
-        },
+        "model_info": (
+            {
+                "name": get_model_package().get("model_name", "Random Forest Classifier"),
+                "version": get_model_package().get("model_version", "1.0.0"),
+            }
+            if os.path.exists(MODEL_FILE)
+            else {
+                "name": "Random Forest Classifier",
+                "version": "1.0.0",
+            }
+        ),
 
         "summary":
             summary

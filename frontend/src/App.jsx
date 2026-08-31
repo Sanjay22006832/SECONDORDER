@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -13,7 +14,6 @@ import CommandCenter from "./pages/CommandCenter";
 import NewAnalysis from "./pages/NewAnalysis";
 import NewAnalysisLanding from "./pages/NewAnalysisLanding";
 import DecisionRoom from "./pages/DecisionRoom";
-import DecisionHistory from "./pages/DecisionHistory";
 import ModelIntelligence from "./pages/ModelIntelligence";
 import Deployments from "./pages/Deployments";
 import Integrations from "./pages/Integrations";
@@ -26,6 +26,7 @@ import Help from "./pages/Help";
 
 function AppRoutes() {
   const location = useLocation();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const publicPages = [
     "/",
@@ -65,8 +66,11 @@ function AppRoutes() {
   }
 
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <div className={`app-shell ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggle={() => setIsSidebarCollapsed((prev) => !prev)}
+      />
 
       <div className="workspace-canvas">
         <GlobalNavigation />
@@ -100,11 +104,6 @@ function AppRoutes() {
         <Route
           path="/new-analysis/upload-dataset"
           element={<NewAnalysis />}
-        />
-
-        <Route
-          path="/history"
-          element={<DecisionHistory />}
         />
 
         <Route

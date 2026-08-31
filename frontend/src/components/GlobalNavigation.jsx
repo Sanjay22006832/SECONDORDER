@@ -8,7 +8,6 @@ function getPageName(pathname) {
     "/command-center": "Command Center",
     "/deployments": "Deployments",
     "/new-analysis": "New Analysis",
-    "/history": "Decision History",
     "/model": "Model Intelligence",
     "/integrations": "Integrations",
     "/settings": "Settings",
